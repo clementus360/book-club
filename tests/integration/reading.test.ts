@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Harness } from "../support/harness";
 
@@ -31,6 +32,136 @@ describe("reading progress", () => {
     await expect(put(outsider, outsider)).rejects.toThrow(/row-level security/);
     await h.rpc(admin, "complete_cycle", { p_cycle_id: cycle });
     expect(await h.as(member, "update reading_progress set current_page = 99 where user_id = $1 returning id", [member])).toEqual([]);
+  });
+});
+
+describe("finding a date", () => {
+  const at = (days: number) => new Date(Date.now() + days * 864e5).toISOString();
+  const ask = (who: string, club: string, times: (string | null)[], extra: Record<string, unknown> = {}) =>
+    h.rpc(who, "create_meeting_poll", { p_club_id: club, p_cycle_id: null, p_title: "Supper", p_location: "Here", p_timezone: "Africa/Kigali", p_times: times, ...extra });
+  const timesOf = async (who: string, poll: string) => (await h.as(who, "select id from meeting_poll_times where poll_id = $1 order by starts_at", [poll])).map((r) => r.id as string);
+
+  it("goes from suggested times to a meeting that keeps people's answers", async () => {
+    const { admin, member, club, cycle, people } = await readingClub(4);
+    const poll = await ask(admin, club, [at(3), at(4), at(4)], { p_cycle_id: cycle });
+    const [one, two] = await timesOf(member, poll) as [string, string];
+    expect((await h.as(member, "select type from notifications where reference_id = $1", [poll])).map((r) => r.type)).toEqual(["poll_opened"]);
+    const answer = (who: string, a: string, b: string) => h.rpc(who, "answer_meeting_poll", { p_poll_id: poll, p_answers: { [one]: a, [two]: b } });
+    await answer(admin, "yes", "no");
+    await answer(member, "no", "no");
+    await answer(member, "no", "if_needed");
+    await answer(people[2]!, "yes", "yes");
+    await answer(people[3]!, "yes", "yes");
+    expect((await h.as(admin, "select answer from meeting_poll_answers where user_id = $1 and time_id = $2", [member, two]))).toEqual([{ answer: "if_needed" }]);
+    await h.rpc(people[3]!, "leave_club", { p_club_id: club });
+    const meetingId = await h.rpc(admin, "choose_meeting_time", { p_time_id: two });
+    expect(await h.as(member, "select title, location, timezone, cycle_id, created_by, status from meetings where id = $1", [meetingId]))
+      .toEqual([{ title: "Supper", location: "Here", timezone: "Africa/Kigali", cycle_id: cycle, created_by: admin, status: "scheduled" }]);
+    const said = await h.as(admin, "select user_id, attendance_status from meeting_attendees where meeting_id = $1", [meetingId]);
+    expect(Object.fromEntries(said.map((r) => [r.user_id, r.attendance_status]))).toEqual({ [admin]: "not_going", [member]: "maybe", [people[2]!]: "going" });
+    await expect(h.rpc(admin, "choose_meeting_time", { p_time_id: one })).rejects.toThrow(/settled already/);
+    await expect(answer(member, "yes", "yes")).rejects.toThrow(/settled already/);
+  });
+  it("makes one meeting when two administrators choose at once", async () => {
+    const { admin, member, club } = await readingClub();
+    await h.rpc(admin, "set_member_role", { p_club_id: club, p_user_id: member, p_role: "admin" });
+    const poll = await ask(admin, club, [at(3), at(4)]);
+    const [one, two] = await timesOf(admin, poll) as [string, string];
+    const results = await Promise.allSettled([h.rpc(admin, "choose_meeting_time", { p_time_id: one }), h.rpc(member, "choose_meeting_time", { p_time_id: two })]);
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(await h.as(admin, "select 1 from meetings where club_id = $1", [club])).toHaveLength(1);
+  });
+  it("is arranged by administrators, and answered by members for themselves", async () => {
+    const { admin, member, club } = await readingClub();
+    const other = await readingClub();
+    await expect(ask(member, club, [at(1), at(2)])).rejects.toThrow(/Only a club administrator/);
+    await expect(ask(other.admin, club, [at(1), at(2)])).rejects.toThrow(/Only a club administrator/);
+    const poll = await ask(admin, club, [at(1), at(2)]);
+    const [one] = await timesOf(admin, poll) as [string];
+    for (const t of ["meeting_polls", "meeting_poll_times", "meeting_poll_answers"]) expect(await h.as(other.admin, `select * from ${t}`)).toEqual([]);
+    await expect(h.rpc(other.admin, "answer_meeting_poll", { p_poll_id: poll, p_answers: { [one]: "yes" } })).rejects.toThrow(/could not be found/);
+    await expect(h.rpc(other.admin, "choose_meeting_time", { p_time_id: one })).rejects.toThrow(/could not be found/);
+    for (const [fn, args] of [["choose_meeting_time", { p_time_id: one }], ["stop_meeting_poll", { p_poll_id: poll }], ["add_meeting_poll_time", { p_poll_id: poll, p_starts_at: at(5) }]] as const)
+      await expect(h.rpc(member, fn, args)).rejects.toThrow(/Only a club administrator/);
+    await expect(h.as(member, "insert into meeting_poll_answers (time_id, poll_id, user_id, answer) values ($1, $2, $3, 'yes')", [one, poll, admin])).rejects.toThrow(/permission denied/);
+    await expect(h.as(admin, "update meeting_polls set title = 'x'")).rejects.toThrow(/permission denied/);
+  });
+  it("refuses times and answers that make no sense", async () => {
+    const { admin, member, club } = await readingClub();
+    const two = await readingClub();
+    await expect(ask(admin, club, [at(1)])).rejects.toThrow(/between two and eight/);
+    await expect(ask(admin, club, [at(1), at(1)])).rejects.toThrow(/between two and eight/);
+    await expect(ask(admin, club, Array.from({ length: 9 }, (_, i) => at(i + 1)))).rejects.toThrow(/between two and eight/);
+    await expect(ask(admin, club, [at(-1), at(1)])).rejects.toThrow(/in the future/);
+    await expect(ask(admin, club, [null, at(1), at(2)])).rejects.toThrow(/in the future/);
+    await expect(ask(admin, club, [at(1), at(2)], { p_title: "  " })).rejects.toThrow(/title/);
+    await expect(ask(admin, club, [at(1), at(2)], { p_timezone: "Middle/Earth" })).rejects.toThrow(/not recognised/);
+    await expect(ask(admin, club, [at(1), at(2)], { p_cycle_id: two.cycle })).rejects.toThrow(/foreign key/);
+    const poll = await ask(admin, club, [at(1), at(2)]);
+    const elsewhere = await ask(two.admin, two.club, [at(1), at(2)]);
+    const [one] = await timesOf(admin, poll) as [string];
+    const [theirs] = await timesOf(two.admin, elsewhere) as [string];
+    const answer = (a: unknown) => h.rpc(member, "answer_meeting_poll", { p_poll_id: poll, p_answers: a });
+    await expect(answer({})).rejects.toThrow(/Choose an answer/);
+    await expect(answer([])).rejects.toThrow(/Choose an answer/);
+    await expect(answer({ [one]: "perhaps" })).rejects.toThrow(/have changed/);
+    await expect(answer({ [one]: null })).rejects.toThrow(/have changed/);
+    await expect(answer({ [theirs]: "yes" })).rejects.toThrow(/have changed/);
+    await expect(answer({ nonsense: "yes" })).rejects.toThrow(/have changed/);
+    await h.rpc(admin, "add_meeting_poll_time", { p_poll_id: poll, p_starts_at: at(9) });
+    await expect(h.rpc(admin, "add_meeting_poll_time", { p_poll_id: poll, p_starts_at: at(-9) })).rejects.toThrow(/in the future/);
+    await h.sql("update meeting_poll_times set starts_at = now() - interval '1 hour' where id = $1", [one]);
+    await expect(h.rpc(admin, "choose_meeting_time", { p_time_id: one })).rejects.toThrow(/has passed/);
+  });
+  it("leaves nothing to answer once stopped", async () => {
+    const { admin, member, club } = await readingClub();
+    const poll = await ask(admin, club, [at(1), at(2)]);
+    await h.rpc(admin, "stop_meeting_poll", { p_poll_id: poll });
+    expect(await h.as(member, "select 1 from notifications where reference_id = $1", [poll])).toEqual([]);
+    expect(await h.as(member, "select 1 from activity_events where reference_id = $1", [poll])).toEqual([]);
+    await expect(h.rpc(admin, "stop_meeting_poll", { p_poll_id: poll })).rejects.toThrow(/settled already/);
+  });
+});
+
+describe("calendar links", () => {
+  const token = (c: string) => c.repeat(43);
+  const hash = (t: string) => createHash("sha256").update(t).digest("hex");
+  const link = (who: string, t: string) => h.as(who, "insert into calendar_links (user_id, nonce, token_hash) values ($1, $2, $3)", [who, randomUUID(), hash(t)]);
+  const feed = async (t: string | null) => (await h.as(null, "select calendar_feed($1) f", [t]))[0]!.f as { id: string; cancelled: boolean }[] | null;
+
+  it("show the meetings of the reader's own clubs, and nothing more", async () => {
+    const { admin, member, club } = await readingClub();
+    const other = await readingClub();
+    const id = await meeting(admin, club, { agenda: "SECRET AGENDA", description: "SECRET DESCRIPTION", location: "Here" });
+    const off = await meeting(admin, club);
+    const declined = await meeting(admin, club);
+    await meeting(other.admin, other.club);
+    await h.as(admin, "update meetings set status = 'cancelled', outcomes = 'SECRET OUTCOME' where id = $1", [off]).catch(() => h.as(admin, "update meetings set status = 'cancelled' where id = $1", [off]));
+    await h.as(member, "insert into meeting_attendees (meeting_id, user_id, attendance_status) values ($1, $2, 'not_going')", [declined, member]);
+    await link(member, token("m"));
+    const seen = (await feed(token("m")))!;
+    expect(seen.map((m) => [m.id, m.cancelled]).sort()).toEqual([[id, false], [off, true]].sort());
+    expect(JSON.stringify(seen)).not.toContain("SECRET");
+    expect(Object.keys(seen[0]!).sort()).toEqual(["cancelled", "club", "created_at", "id", "location", "starts_at", "title", "updated_at"]);
+    // Leaving the club takes its meetings away.
+    await h.rpc(member, "leave_club", { p_club_id: club });
+    expect(await feed(token("m"))).toEqual([]);
+    // Turning it off, or deleting the account, ends it.
+    await h.as(member, "delete from calendar_links where user_id = $1", [member]);
+    expect(await feed(token("m"))).toBeNull();
+  });
+  it("cannot be guessed, read or changed by anyone else", async () => {
+    const [a, b] = [await h.user(), await h.user()];
+    await link(a, token("a"));
+    for (const t of [null, "", "x", token("z"), hash(token("a")), hash(token("a")).slice(0, 43), `${token("a")}a`]) expect(await feed(t)).toBeNull();
+    expect(await h.as(b, "select * from calendar_links")).toEqual([]);
+    expect(await h.as(b, "update calendar_links set token_hash = $1 returning user_id", [hash(token("b"))])).toEqual([]);
+    expect(await h.as(b, "delete from calendar_links returning user_id")).toEqual([]);
+    await expect(h.as(b, "insert into calendar_links (user_id, nonce, token_hash) values ($1, $2, $3)", [a, randomUUID(), hash(token("c"))])).rejects.toThrow(/row-level security|duplicate/);
+    await expect(link(b, token("a"))).rejects.toThrow(/duplicate/);
+    await expect(h.as(b, "insert into calendar_links (user_id, nonce, token_hash) values ($1, $2, 'raw')", [b, randomUUID()])).rejects.toThrow(/check constraint/);
+    await expect(h.as(null, "select * from calendar_links")).rejects.toThrow(/permission denied/);
+    expect(await feed(token("a"))).toEqual([]);
   });
 });
 
@@ -163,7 +294,7 @@ describe("surface area", () => {
     expect(await h.sql("select proname from pg_proc where pronamespace in ('public'::regnamespace, 'private'::regnamespace) and prosecdef and not coalesce(proconfig::text like '%search_path%', false)")).toEqual([]);
   });
   it("lets signed-out visitors call exactly one function and read no tables", async () => {
-    expect(await h.sql("select proname from pg_proc where pronamespace = 'public'::regnamespace and has_function_privilege('anon', oid, 'execute')")).toEqual([{ proname: "preview_invitation" }]);
+    expect(await h.sql("select proname from pg_proc where pronamespace = 'public'::regnamespace and has_function_privilege('anon', oid, 'execute') order by 1")).toEqual([{ proname: "calendar_feed" }, { proname: "preview_invitation" }]);
     expect(await h.sql("select relname from pg_class where relnamespace = 'public'::regnamespace and relkind = 'r' and has_any_column_privilege('anon', oid, 'select')")).toEqual([]);
   });
   it("keeps import_book to the service role", async () => {

@@ -79,6 +79,8 @@ supabase/migrations     schema, rules, RLS, grants
 
 **Guidance.** `src/lib/guide.ts` decides the one thing to suggest to each person, `src/lib/hints.ts` says what every control does, and `src/lib/help.ts` holds the help for each page. A new button needs an entry in `hints.ts`; `tests/e2e/help.spec.ts` fails without one. The interface never says "cycle", "ballot" or "runoff": `src/lib/plain.ts` rewords the few database messages that do.
 
+**Calendars.** Nothing to set up. A meeting opens in Google or Outlook through a prefilled link. "Add to my calendar" subscribes to `/calendar/<token>.ics`, read without a session by `calendar_feed()`, the second of the two functions a signed-out caller may use. The token is derived from `SUPABASE_SECRET_KEY` and a nonce, and only its hash is stored, so replacing that key ends existing subscriptions once their owner next makes a link. Commonplace never reads anyone's calendar: dates are found by asking (`meeting_polls`).
+
 **Search.** Typing looks in the app's own books after 200 ms and the public catalogues after 650 ms, at least 1.2 s apart, with answers remembered in the tab, a day's cache on the server and 60 catalogue searches per person per five minutes.
 
 **Books.** One row is one publication. The same provider id, or the same ISBN with compatible volumes, reuses a row. Anything less certain is put to the reader. Manual entries are visible only to the person who made them until they reach a club.

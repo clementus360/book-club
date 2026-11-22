@@ -94,7 +94,7 @@ test("someone new is told what to do at every point, with nothing unexplained", 
   await now(b, "You have finished the book");
   await addToMyLibrary(a, "left hand", "The Left Hand of Darkness");
   const book = new URL(a.url()).pathname;
-  for (const path of ["/app", "/app/current-book", meeting, `${meeting}/edit`, "/app/meetings", "/app/library", "/app/archive", "/app/members", "/app/my-library", "/app/recommendations", "/app/recommendations?view=made", "/app/notifications", "/app/settings", "/app/account", "/app/help", "/app/add-book", book]) {
+  for (const path of ["/app", "/app/current-book", meeting, `${meeting}/edit`, "/app/meetings", "/app/library", "/app/archive", "/app/members", "/app/my-library", "/app/recommendations", "/app/recommendations?view=made", "/app/notifications", "/app/calendar", "/app/meetings/find", "/app/settings", "/app/account", "/app/help", "/app/add-book", book]) {
     await a.goto(path);
     await explained(a, path);
   }

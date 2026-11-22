@@ -62,6 +62,8 @@ export function zoneLabel(zone: string, at: string | Date = new Date()): string 
 /** A calendar date (no time, no zone) from a Postgres `date`. */
 export const formatPlainDate = (date: string) => formatDate(`${date}T00:00:00Z`, "UTC");
 
+export const isAhead = (iso: string) => Date.parse(iso) > Date.now();
+
 export function fromNow(iso: string | Date, now = new Date()): string {
   const diff = new Date(iso).getTime() - now.getTime();
   const abs = Math.abs(diff);

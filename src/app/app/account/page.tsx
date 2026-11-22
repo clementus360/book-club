@@ -1,6 +1,7 @@
-import { KeyRound, UserRound } from "lucide-react";
+import { CalendarSync, KeyRound, UserRound } from "lucide-react";
 import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Fold } from "@/components/fold";
 import { ActionForm, Submit } from "@/components/forms/action-form";
 import { Field } from "@/components/forms/fields";
@@ -25,6 +26,9 @@ export default async function Account() {
             <Field label="Picture address (optional)" name="avatar_url" type="url" maxLength={1000} defaultValue={profile.avatar_url ?? ""} hint="A link to an image, starting with https://" />
             <Submit>Save profile</Submit>
           </ActionForm>
+        </Fold>
+        <Fold icon={CalendarSync} title="Calendar" note="See your meetings in your own calendar.">
+          <Link className="btn btn-plain" href="/app/calendar"><Labelled>Add to my calendar</Labelled></Link>
         </Fold>
         <Fold icon={KeyRound} title="Password" note="Choose one, or change it.">
           <ActionForm action={updatePassword} resetOnDone className="form">

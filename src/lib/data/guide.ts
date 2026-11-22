@@ -4,11 +4,14 @@ import { nextDeadline } from "@/lib/cycle";
 import { nextStep, stepOf, type GuideInput } from "@/lib/guide";
 import { must, requireClub } from "@/lib/viewer";
 import { getActiveCycle, getMeetings, getMembers } from "./club";
+import { getOpenPolls } from "./polls";
 
 /** Everything needed to say where the club is and what this person could do next. */
 export const getGuide = cache(async () => {
   const { supabase, club, userId, isAdmin } = await requireClub();
-  const [cycle, members, meetings] = await Promise.all([getActiveCycle(), getMembers(), getMeetings()]);
+  const [cycle, members, meetings, polls] = await Promise.all([getActiveCycle(), getMembers(), getMeetings(), getOpenPolls()]);
+  const asking = polls.filter((p) => p.times > 0);
+  const poll = asking.find((p) => !p.mine) ?? asking[0];
   const status = cycle?.status ?? null;
   const about = meetings.filter((m) => cycle && m.cycle_id === cycle.id && m.status !== "cancelled");
   const upcoming = about.find((m) => m.status === "scheduled" && new Date(m.starts_at).getTime() > Date.now());
@@ -34,6 +37,7 @@ export const getGuide = cache(async () => {
     meeting: upcoming ? { id: upcoming.id, title: upcoming.title, answered: Boolean(answer?.data), startsAt: upcoming.starts_at } : null,
     met: about.some((m) => m.status === "completed" || (m.status === "scheduled" && m !== upcoming)),
     iReviewed: Boolean(review?.data),
+    poll: poll ? { id: poll.id, answered: poll.mine, everyone: poll.answered >= poll.members } : null,
   };
   // Hold "met" back while another meeting about this book is still to come.
   if (upcoming) input.met = false;

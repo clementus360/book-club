@@ -36,6 +36,17 @@ test("every page is accessible, fits a phone and a desktop, and has working link
   await a.getByRole("button", { name: "Arrange the meeting" }).click();
   await a.waitForURL(/meetings\/[0-9a-f-]{36}$/);
   const meeting = new URL(a.url()).pathname;
+  const day = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+  await a.goto("/app/meetings/find");
+  await a.getByLabel("Title").fill("Second supper");
+  await a.getByLabel("Time 1").fill(`${day(5)}T19:00`);
+  await a.getByLabel("Time 2").fill(`${day(6)}T18:30`);
+  await a.getByRole("button", { name: "Ask everyone" }).click();
+  await a.waitForURL(/meetings\/find\/[0-9a-f-]{36}$/);
+  const find = new URL(a.url()).pathname;
+  for (const row of await a.locator("form fieldset").all()) await row.getByRole("radio", { name: "Yes" }).check();
+  await a.getByRole("button", { name: "Send my answers" }).click();
+  await expect(a.getByText("Thank you.")).toBeVisible();
 
   const sweep = async (label: string, paths: string[]) => {
     for (const size of [{ width: 1280, height: 900 }, { width: 360, height: 740 }]) {
@@ -51,7 +62,7 @@ test("every page is accessible, fits a phone and a desktop, and has working link
   };
 
   const app = ["/app", "/app/my-library", "/app/recommendations", "/app/recommendations?view=made", "/app/library", "/app/selection", "/app/current-book", "/app/meetings",
-    "/app/archive", "/app/members", "/app/settings", "/app/account", "/app/notifications", "/app/help", "/app/add-book", "/app/add-book?to=club", book, meeting, `${meeting}/edit`, "/app/meetings/new", "/onboarding"];
+    "/app/archive", "/app/members", "/app/settings", "/app/account", "/app/notifications", "/app/calendar", "/app/meetings/find", find, "/app/help", "/app/add-book", "/app/add-book?to=club", book, meeting, `${meeting}/edit`, "/app/meetings/new", "/onboarding"];
   await sweep("nominating", app);
 
   // Every link on every page leads somewhere.
@@ -63,6 +74,7 @@ test("every page is accessible, fits a phone and a desktop, and has working link
     for (const href of await a.locator("a[href^='/']").evaluateAll((as) => as.map((x) => x.getAttribute("href")!))) seen.add(href.split("#")[0]!);
   }
   for (const href of seen) {
+    if (href.startsWith("/app/calendar/open")) continue; // leaves for a calendar; see calendar.spec.ts
     const res = await a.request.get(href);
     if (!res.ok()) broken.push(`${href} ${res.status()}`);
   }

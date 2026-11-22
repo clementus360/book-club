@@ -12,7 +12,7 @@ const STORY = [
   ["Nominate", "An administrator starts choosing a book. Everyone gets a few days to nominate one book they would like the club to read."],
   ["Vote", "Put the nominated books in order, with your favourite at the top. Your vote is private. The book with the most points wins."],
   ["Read", "Read the winning book at your own pace. You can say where you are, and save questions and passages for the meeting."],
-  ["Meet", "An administrator sets a date and a place. Say whether you are coming, then meet and talk."],
+  ["Meet", "An administrator sets a date and a place, or asks everyone which times suit them. Say whether you are coming, then meet and talk."],
   ["Finish, and start again", "Write a short review if you like. The administrator finishes the book, it joins the books you have read, and you choose the next one."],
 ] as const;
 
@@ -23,6 +23,7 @@ const FAQ = [
   ["Can anyone see how I voted?", "No, not even an administrator. The club sees only the total points. In a very small club, people may be able to guess."],
   ["What if I miss a deadline?", "You can still read and come to the meeting. An administrator can also give everyone more time before a book is chosen."],
   ["I pressed the wrong thing. What now?", "Anything serious asks you to confirm first. You can change a nomination until nominations close, change your vote until voting closes, and change whether you are coming to a meeting at any time before it."],
+  ["How do I get meetings into my calendar?", "Open Meetings and choose Add to my calendar. Pick Google, Apple or Outlook and confirm. After that, meetings appear and change by themselves."],
   ["What happens if I leave a club?", "My books stays with you. What you wrote for the club stays in its record."],
 ] as const;
 

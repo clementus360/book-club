@@ -24,6 +24,8 @@ export type GuideInput = {
   /** A meeting about this book has already been held. */
   met: boolean;
   iReviewed: boolean;
+  /** A date being looked for, if any. */
+  poll?: { id: string; answered: boolean; everyone: boolean } | null;
 };
 
 export type NextStep = { title: string; body: string; action?: { label: string; href: string }; waiting?: boolean };
@@ -75,10 +77,12 @@ export function nextStep(g: GuideInput): NextStep {
         : { title: "Waiting for a decision", body: "The vote did not produce a winner, so an administrator will settle it with the group.", action: { label: "See the result so far", href: "/app/selection" }, waiting: true };
 
     case "reading":
+      if (g.poll && !g.poll.answered) return { title: "When can you meet?", body: "The club is looking for a date. Say which of the suggested times suit you.", action: { label: "Say when you can come", href: `/app/meetings/find/${g.poll.id}` } };
+      if (g.poll?.everyone && g.isAdmin) return { title: "Everyone has answered", body: "See which time suits most people, and choose it.", action: { label: "See the answers", href: `/app/meetings/find/${g.poll.id}` } };
       if (g.meeting && !g.meeting.answered) return { title: "Are you coming to the meeting?", body: `${g.meeting.title} is ${fromNow(g.meeting.startsAt)}. Let the others know if you can make it.`, action: { label: "Answer", href: `/app/meetings/${g.meeting.id}` } };
       if (g.met && !g.iReviewed) return { title: "Say what you thought", body: "The club has met about this book. Leave a few words for the club’s record.", action: { label: "Write a club review", href: "/app/current-book#reviews" } };
-      if (g.met && g.isAdmin && !g.meeting) return { title: "Finish this book when you are ready", body: "The club has met. Finishing moves the book and everything you wrote to Books we have read, and lets you choose the next one.", action: { label: "Go and finish this book", href: "/app/current-book#manage" } };
-      if (g.isAdmin && !g.meeting && !g.met) return { title: "Arrange a meeting", body: "Pick a date and a place to talk about the book. Everyone will be told and can say whether they are coming.", action: { label: "Arrange a meeting", href: "/app/meetings/new" } };
+      if (g.met && g.isAdmin && !g.meeting && !g.poll) return { title: "Finish this book when you are ready", body: "The club has met. Finishing moves the book and everything you wrote to Books we have read, and lets you choose the next one.", action: { label: "Go and finish this book", href: "/app/current-book#manage" } };
+      if (g.isAdmin && !g.meeting && !g.met && !g.poll) return { title: "Arrange a meeting", body: "Pick a date and a place to talk about the book. Not sure when? Find a date, on the Meetings page, asks everyone what suits them.", action: { label: "Arrange a meeting", href: "/app/meetings/new" } };
       if (g.myProgress === "finished") return { title: "You have finished the book", body: g.meeting ? `The meeting is ${fromNow(g.meeting.startsAt)}. Until then, you could add a question to talk about.` : "You could add a question to talk about when you meet.", action: { label: "Add a question", href: "/app/current-book#questions" }, waiting: true };
       return { title: "Enjoy the book", body: `Read at your own pace, and let the others know where you are.${when}`, action: { label: "Update my progress", href: "/app/current-book#progress" } };
   }

@@ -24,6 +24,8 @@ export function describeEvent({ type, reference_id, actor, book, meeting, finish
     cycle_completed: [book ? `The club finished ${book}` : "The club finished a book", reference_id ? `/app/archive/${reference_id}` : "/app/archive"],
     cycle_reopened: [`${actor} reopened a finished book`, "/app/current-book"],
     cycle_cancelled: [`${actor} stopped choosing a book`, "/app/selection"],
+    poll_opened: [`${actor} asked when you can meet${called}`, `/app/meetings/find/${reference_id}`],
+    poll_time_added: [`${actor} suggested another time${called}`, `/app/meetings/find/${reference_id}`],
     meeting_created: [`${actor} arranged a meeting${called}`, `/app/meetings/${reference_id}`],
     meeting_updated: [`${actor} changed a meeting${called}`, `/app/meetings/${reference_id}`],
     meeting_cancelled: [`${actor} cancelled a meeting${called}`, `/app/meetings/${reference_id}`],

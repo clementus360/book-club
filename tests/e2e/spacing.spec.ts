@@ -73,7 +73,7 @@ test("spacing and sections are the same on every page", async ({ browser }) => {
     }
     await a.setViewportSize({ width: 1280, height: 900 });
   };
-  const lists = ["/app", "/app/selection", "/app/meetings", "/app/library", "/app/archive", "/app/members", "/app/my-library", "/app/recommendations", "/app/notifications", "/app/help", "/app/account", "/app/settings", "/app/add-book"];
+  const lists = ["/app", "/app/selection", "/app/meetings", "/app/library", "/app/archive", "/app/members", "/app/my-library", "/app/recommendations", "/app/notifications", "/app/calendar", "/app/meetings/find", "/app/help", "/app/account", "/app/settings", "/app/add-book"];
   await sweep("empty", lists);
   await joinViaInvite(b, "Ben", await invite(a), "The Thursday Readers");
   await invite(a);

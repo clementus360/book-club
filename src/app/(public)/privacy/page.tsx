@@ -14,7 +14,9 @@ export default function Privacy() {
       <h2>What only you can see</h2>
       <p>My books: your notes, your personal ratings and your personal reviews. Your votes: other members, including administrators of your club, see totals after voting closes but never how you ranked the books. In a very small club, totals alone may still allow people to guess.</p>
       <h2>What your club can see</h2>
-      <p>Your name and picture, what you recommend to that club and whatever you choose to share with the recommendation, what you nominate, your reading progress, whether you are coming to a meeting, and anything you write in the club’s discussion or club reviews. One club never sees what you do in another. If you leave, what you contributed stays in the club’s record under your name. You can withdraw your recommendations at any time.</p>
+      <p>Your name and picture, what you recommend to that club and whatever you choose to share with the recommendation, what you nominate, your reading progress, which times suit you and whether you are coming to a meeting, and anything you write in the club’s discussion or club reviews. One club never sees what you do in another. If you leave, what you contributed stays in the club’s record under your name. You can withdraw your recommendations at any time.</p>
+      <h2>Your calendar</h2>
+      <p>Commonplace never reads your calendar. If you choose to see your meetings in one, it fetches them from a private link made for you, showing the name, time and place of each meeting and which club it is for. We keep only a scrambled form of the link, and you can turn it off at any time. Your calendar’s provider then holds those details too, as it does for anything else in it.</p>
       <h2>Books and covers</h2>
       <p>When you search for a book, the words you type are sent by our server to Open Library and Google Books. They do not receive your name or account. Cover images load in your browser from those services, and member pictures or manually added covers load from wherever they are hosted, so those hosts see your IP address.</p>
       <h2>Cookies</h2>

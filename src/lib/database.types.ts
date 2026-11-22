@@ -169,6 +169,29 @@ export type Database = {
         Relationships: [
         ];
       };
+      calendar_links: {
+        Row: {
+          user_id: string;
+          nonce: string;
+          token_hash: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id?: string;
+          nonce: string;
+          token_hash: string;
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          nonce?: string;
+          token_hash?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "calendar_links_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ];
+      };
       club_books: {
         Row: {
           id: string;
@@ -463,6 +486,94 @@ export type Database = {
         Relationships: [
           { foreignKeyName: "meeting_attendees_meeting_id_fkey"; columns: ["meeting_id"]; isOneToOne: false; referencedRelation: "meetings"; referencedColumns: ["id"] },
           { foreignKeyName: "meeting_attendees_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ];
+      };
+      meeting_poll_answers: {
+        Row: {
+          time_id: string;
+          poll_id: string;
+          user_id: string;
+          answer: Database["public"]["Enums"]["poll_answer"];
+        };
+        Insert: {
+          time_id: string;
+          poll_id: string;
+          user_id: string;
+          answer: Database["public"]["Enums"]["poll_answer"];
+        };
+        Update: {
+          time_id?: string;
+          poll_id?: string;
+          user_id?: string;
+          answer?: Database["public"]["Enums"]["poll_answer"];
+        };
+        Relationships: [
+          { foreignKeyName: "meeting_poll_answers_time_id_poll_id_fkey"; columns: ["time_id","poll_id"]; isOneToOne: false; referencedRelation: "meeting_poll_times"; referencedColumns: ["id","poll_id"] },
+          { foreignKeyName: "meeting_poll_answers_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ];
+      };
+      meeting_poll_times: {
+        Row: {
+          id: string;
+          poll_id: string;
+          starts_at: string;
+        };
+        Insert: {
+          id?: string;
+          poll_id: string;
+          starts_at: string;
+        };
+        Update: {
+          id?: string;
+          poll_id?: string;
+          starts_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "meeting_poll_times_poll_id_fkey"; columns: ["poll_id"]; isOneToOne: false; referencedRelation: "meeting_polls"; referencedColumns: ["id"] },
+        ];
+      };
+      meeting_polls: {
+        Row: {
+          id: string;
+          club_id: string;
+          cycle_id: string | null;
+          title: string;
+          location: string | null;
+          timezone: string;
+          status: Database["public"]["Enums"]["poll_status"];
+          meeting_id: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          cycle_id?: string | null;
+          title: string;
+          location?: string | null;
+          timezone: string;
+          status?: Database["public"]["Enums"]["poll_status"];
+          meeting_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          cycle_id?: string | null;
+          title?: string;
+          location?: string | null;
+          timezone?: string;
+          status?: Database["public"]["Enums"]["poll_status"];
+          meeting_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "meeting_polls_club_id_fkey"; columns: ["club_id"]; isOneToOne: false; referencedRelation: "clubs"; referencedColumns: ["id"] },
+          { foreignKeyName: "meeting_polls_created_by_fkey"; columns: ["created_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "meeting_polls_cycle_id_club_id_fkey"; columns: ["cycle_id","club_id"]; isOneToOne: false; referencedRelation: "reading_cycles"; referencedColumns: ["id","club_id"] },
+          { foreignKeyName: "meeting_polls_meeting_id_fkey"; columns: ["meeting_id"]; isOneToOne: false; referencedRelation: "meetings"; referencedColumns: ["id"] },
         ];
       };
       meetings: {
@@ -932,9 +1043,13 @@ export type Database = {
     Functions: {
       accept_invitation: { Args: { p_token: string | null }; Returns: Json };
       add_club_book: { Args: { p_club_id: string; p_book_id: string }; Returns: undefined };
+      add_meeting_poll_time: { Args: { p_poll_id: string; p_starts_at: string | null }; Returns: undefined };
+      answer_meeting_poll: { Args: { p_poll_id: string; p_answers: Json }; Returns: undefined };
       ballot_count: { Args: { p_cycle_id: string }; Returns: Json };
+      calendar_feed: { Args: { p_token: string | null }; Returns: Json };
       can_edit_book: { Args: { p_book_id: string }; Returns: boolean };
       cancel_cycle: { Args: { p_cycle_id: string }; Returns: undefined };
+      choose_meeting_time: { Args: { p_time_id: string }; Returns: string };
       close_club: { Args: { p_club_id: string }; Returns: undefined };
       close_voting_now: { Args: { p_cycle_id: string }; Returns: undefined };
       complete_cycle: { Args: { p_cycle_id: string }; Returns: undefined };
@@ -944,6 +1059,7 @@ export type Database = {
       create_cycle: { Args: { p_club_id: string; p_nomination_opens_at: string | null; p_nomination_closes_at: string | null; p_voting_opens_at: string | null; p_voting_closes_at: string | null; p_reading_starts_at: string | null; p_reading_ends_at: string | null }; Returns: string };
       create_invitation: { Args: { p_club_id: string }; Returns: { id: string; token: string; expires_at: string }[] };
       create_manual_book: { Args: { p_book: Json }; Returns: string };
+      create_meeting_poll: { Args: { p_club_id: string; p_cycle_id: string; p_title: string | null; p_location: string | null; p_timezone: string | null; p_times: string[] }; Returns: string };
       decide_selection: { Args: { p_cycle_id: string; p_nomination_id: string; p_reason: string | null }; Returns: undefined };
       edit_recommendation: { Args: { p_id: string; p_text: string | null; p_rating_mode: string | null; p_shared_review: string | null }; Returns: undefined };
       find_similar_books: { Args: { p_book: Json }; Returns: Database["public"]["Tables"]["books"]["Row"][] };
@@ -962,6 +1078,7 @@ export type Database = {
       revoke_invitation: { Args: { p_invitation_id: string }; Returns: undefined };
       save_club_review: { Args: { p_cycle_id: string; p_rating: number | null; p_text: string | null }; Returns: undefined };
       set_member_role: { Args: { p_club_id: string; p_user_id: string; p_role: Database["public"]["Enums"]["club_role"] }; Returns: undefined };
+      stop_meeting_poll: { Args: { p_poll_id: string }; Returns: undefined };
       submit_ballot: { Args: { p_cycle_id: string; p_ranking: string[] }; Returns: undefined };
       sync_club: { Args: { p_club_id: string }; Returns: undefined };
       update_cycle_schedule: { Args: { p_cycle_id: string; p_nomination_opens_at: string | null; p_nomination_closes_at: string | null; p_voting_opens_at: string | null; p_voting_closes_at: string | null; p_reading_starts_at: string | null; p_reading_ends_at: string | null }; Returns: undefined };
@@ -981,6 +1098,8 @@ export type Database = {
       invitation_status: "pending" | "accepted" | "revoked" | "expired";
       meeting_status: "scheduled" | "completed" | "cancelled";
       note_kind: "note" | "quotation";
+      poll_answer: "yes" | "if_needed" | "no";
+      poll_status: "open" | "decided" | "stopped";
       progress_status: "not_started" | "reading" | "finished";
       reading_status: "read" | "currently_reading" | "want_to_read";
     };

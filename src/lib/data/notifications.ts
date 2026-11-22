@@ -30,13 +30,15 @@ export async function getNotifications(limit: number) {
   const recs = refs((t) => t === "recommendation_shared");
   const meets = refs((t) => t.startsWith("meeting_"));
   const cycles = refs((t) => /^(nominations|voting|runoff|decision|cycle)_|^book_selected$/.test(t));
-  const [r, m, c] = await Promise.all([
+  const polls = refs((t) => t.startsWith("poll_"));
+  const [r, m, c, p] = await Promise.all([
     recs.length ? supabase.from("club_recommendations").select("id, book:books!club_recommendations_book_id_fkey(title)").in("id", recs) : null,
     meets.length ? supabase.from("meetings").select("id, title").in("id", meets) : null,
     cycles.length ? supabase.from("reading_cycles").select("id, status, book:books!reading_cycles_book_id_fkey(title)").in("id", cycles) : null,
+    polls.length ? supabase.from("meeting_polls").select("id, title").in("id", polls) : null,
   ]);
   const books = new Map([...(r ? must(r) : []), ...(c ? must(c) : [])].map((x) => [x.id, x.book?.title]));
-  const meetings = new Map((m ? must(m) : []).map((x) => [x.id, x.title]));
+  const meetings = new Map([...(m ? must(m) : []), ...(p ? must(p) : [])].map((x) => [x.id, x.title]));
   const finished = new Set((c ? must(c) : []).filter((x) => x.status === "completed").map((x) => x.id));
 
   const notices = list.map((n): Notice => {

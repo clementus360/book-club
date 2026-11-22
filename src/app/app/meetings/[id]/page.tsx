@@ -3,6 +3,7 @@ import { Icon, Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { AddToCalendar } from "@/components/calendar";
 import { AddNote, Notes } from "@/components/discussion";
 import { ActionButton } from "@/components/forms/action-form";
 import { FormDialog } from "@/components/forms/dialog";
@@ -10,8 +11,10 @@ import { Checkbox, TextArea } from "@/components/forms/fields";
 import { Avatar, Fact, nameOf, PageHeader, Section, Side, WithMargin } from "@/components/ui";
 import { isUuid } from "@/lib/action";
 import { saveOutcomes, setAttendance, setMeetingStatus } from "@/lib/actions/meetings";
+import { googleEvent, outlookEvent } from "@/lib/calendar";
 import { getMembers } from "@/lib/data/club";
-import { formatTime, formatWeekday, fromNow, zoneLabel } from "@/lib/dates";
+import { formatTime, formatWeekday, fromNow, isAhead, zoneLabel } from "@/lib/dates";
+import { siteUrl } from "@/lib/env";
 import { must, requireClub } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Meeting" };
@@ -43,6 +46,8 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
   const mine = answer.get(userId);
   const canWrite = meeting.status !== "cancelled" && (isAdmin || meeting.discussion_leader_id === userId);
   const ctx = { clubId: club.id, cycleId: meeting.cycle_id, meetingId: id, userId, isAdmin, zone: club.timezone };
+  const event = { title: meeting.title, club: club.name, starts_at: meeting.starts_at, location: meeting.location, url: `${siteUrl()}/app/meetings/${id}` };
+  const ahead = meeting.status === "scheduled" && isAhead(meeting.starts_at);
   const bookHref = meeting.cycle?.status === "completed" ? `/app/archive/${meeting.cycle.id}` : "/app/current-book";
 
   return (
@@ -87,7 +92,7 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
           )}
         </>
       }>
-        <Section title="When and where">
+        <Section title="When and where" aside={ahead && <AddToCalendar google={googleEvent(event)} outlook={outlookEvent(event, "personal")} work={outlookEvent(event, "work")} />}>
           <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
             <Fact icon={CalendarDays} term="When"><span className={`font-serif text-xl leading-snug ${meeting.status === "cancelled" ? "line-through" : ""}`}>{formatWeekday(meeting.starts_at, meeting.timezone)}<br />{formatTime(meeting.starts_at, meeting.timezone)}</span><span className="meta block">{zoneLabel(meeting.timezone, meeting.starts_at)}</span></Fact>
             <Fact icon={MapPin} term="Where"><span className="font-serif text-xl leading-snug whitespace-pre-line">{meeting.location ?? "To be decided"}</span></Fact>

@@ -1,5 +1,5 @@
 import {
-  ArrowLeft, ArrowLeftRight, ArrowRight, BookCheck, ThumbsUp, BookOpen, BookPlus, BookX, CalendarClock, CalendarPlus, CalendarX, Check, CheckCheck,
+  ArrowLeft, ArrowLeftRight, ArrowRight, BookCheck, ThumbsUp, BookOpen, BookPlus, BookX, CalendarClock, CalendarPlus, CalendarSearch, CalendarSync, CalendarX, Check, CheckCheck,
   CircleQuestionMark, Copy, ListChecks, ListOrdered, LogOut, MessageCircleQuestionMark, NotebookPen, Pencil, Plus, Quote, RotateCcw, Search,
   ShieldCheck, SlidersHorizontal, Star, Trash2, Undo2, UserMinus, UserPlus, Users, Vote, type LucideIcon,
 } from "lucide-react";
@@ -26,12 +26,12 @@ const ACTIONS: Record<string, LucideIcon> = {
   "Count the votes now": ListChecks, "Record the decision": ListChecks, "See the nominations": ListOrdered, "See how it was chosen": ListOrdered, "See the result so far": ListOrdered,
   "Give more time to nominate": RotateCcw, "Open voting again": RotateCcw, "Reopen this book": RotateCcw, "Change the dates": CalendarClock,
   "Stop choosing this book": BookX, "Stop reading this book": BookX, "Finish this book": BookCheck, "Go and finish this book": BookCheck,
-  "Arrange a meeting": CalendarPlus, "Arrange the meeting": CalendarPlus, "Cancel meeting": CalendarX, "Restore meeting": RotateCcw, "Mark as still to come": RotateCcw,
+  "Arrange a meeting": CalendarPlus, "Arrange the meeting": CalendarPlus, "Find a date": CalendarSearch, "Suggest another time": CalendarPlus, "Add another time": Plus, "Add to my calendar": CalendarSync, "Stop looking for a date": CalendarX, "Choose this time": Check, "Cancel meeting": CalendarX, "Restore meeting": RotateCcw, "Mark as still to come": RotateCcw,
   "For administrators": SlidersHorizontal, "Mark all as read": CheckCheck, "Copy": Copy, "Copied": Check,
   "Help": CircleQuestionMark, "Help with this page": CircleQuestionMark, "Read the full guide": BookOpen,
   "Back to the club": ArrowLeft, "Back to the book": BookOpen, "Open": ArrowRight, "See all": ArrowRight,
   "Open My books": ArrowRight, "Go to My books": ArrowRight, "Go and start the vote": ArrowRight, "Go and count the votes": ArrowRight,
-  "Decide what to do": ArrowRight, "Answer": ArrowRight, "Update my progress": BookOpen, "Choose a different book": Search, "Enter the book by hand": Pencil,
+  "Decide what to do": ArrowRight, "Answer": ArrowRight, "Say when you can come": ArrowRight, "See the answers": ArrowRight, "Update my progress": BookOpen, "Choose a different book": Search, "Enter the book by hand": Pencil,
 };
 const TRAILING = new Set<LucideIcon>([ArrowRight]);
 
