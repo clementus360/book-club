@@ -1,0 +1,28 @@
+import type { Metadata } from "next";
+import { Legal } from "@/components/legal";
+import { googleAuth } from "@/lib/env";
+
+export const metadata: Metadata = { title: "Privacy" };
+
+export default function Privacy() {
+  return (
+    <Legal title="Privacy" updated="22 November 2026">
+      <p>Commonplace is for small, private groups of readers. This page explains what it keeps and who can see it.</p>
+      <h2>What is kept</h2>
+      <p>Your email address and a securely hashed password, used to sign you in. The name and, if you add one, the picture you choose to be known by. The books, reviews, notes, nominations, votes, progress, attendance and discussion you record.</p>
+      {googleAuth() && <p>If you choose to sign in with Google, Google tells us your name and email address. We do not use your Google picture or ask for anything else.</p>}
+      <h2>What only you can see</h2>
+      <p>My books: your notes, your personal ratings and your personal reviews. Your votes: other members, including administrators of your club, see totals after voting closes but never how you ranked the books. In a very small club, totals alone may still allow people to guess.</p>
+      <h2>What your club can see</h2>
+      <p>Your name and picture, what you recommend to that club and whatever you choose to share with the recommendation, what you nominate, your reading progress, whether you are coming to a meeting, and anything you write in the club’s discussion or club reviews. One club never sees what you do in another. If you leave, what you contributed stays in the club’s record under your name. You can withdraw your recommendations at any time.</p>
+      <h2>Books and covers</h2>
+      <p>When you search for a book, the words you type are sent by our server to Open Library and Google Books. They do not receive your name or account. Cover images load in your browser from those services, and member pictures or manually added covers load from wherever they are hosted, so those hosts see your IP address.</p>
+      <h2>Cookies</h2>
+      <p>Cookies keep you signed in and remember which club you were looking at. There is no advertising and no tracking.</p>
+      <h2>Services used to run Commonplace</h2>
+      <p>Accounts and data are held by Supabase, and the website is served by Vercel. Administrators of this installation can technically access stored data in order to operate it.</p>
+      <h2>Your choices</h2>
+      <p>You can edit or delete your library entries, reviews and notes yourself. To have your account deleted or to receive a copy of your data, get in touch.</p>
+    </Legal>
+  );
+}

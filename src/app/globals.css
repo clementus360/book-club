@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f1eee6;
+  --color-sheet: #faf8f2;
+  --color-ink: #211f1b;
+  --color-soft: #5b564c;
+  --color-rule: #d8d2c3;
+  --color-edge: #8d8575; /* control outlines: 3:1 on sheet */
+  --color-leaf: #1e4a3c;
+  --color-leaf-deep: #14362c;
+  --color-leaf-wash: #e0e6da;
+  --color-rubric: #8f2d1d;
+  --color-rubric-wash: #f2e1d8;
+
+  --font-sans: var(--font-hanken), system-ui, "PingFang SC", "Hiragino Sans", "Apple SD Gothic Neo", "Noto Sans CJK SC", sans-serif;
+  --font-serif: var(--font-literata), Georgia, "Songti SC", "Hiragino Mincho ProN", "Nanum Myeongjo", "Noto Serif CJK SC", serif;
+
+  --radius-sm: 2px;
+  --radius-md: 3px;
+}
+
+@layer base {
+  html { color-scheme: light; -webkit-text-size-adjust: 100%; }
+  body { @apply bg-paper font-sans text-ink text-[0.9688rem] leading-relaxed antialiased; }
+  h1, h2, h3 { @apply font-serif; text-wrap: balance; }
+  h1 { font-optical-sizing: auto; letter-spacing: -0.015em; }
+  p { text-wrap: pretty; }
+  :focus-visible { outline: 2px solid var(--color-leaf); outline-offset: 2px; border-radius: 2px; }
+  button:not(:disabled), summary, select { cursor: pointer; }
+  ::selection { background: #cfdccb; }
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 text-[0.9375rem] font-medium leading-tight whitespace-nowrap transition-colors sm:min-h-10;
+  }
+  .btn:disabled, .btn[aria-disabled="true"] { @apply cursor-not-allowed opacity-60; }
+  .btn-primary { @apply bg-leaf text-sheet hover:bg-leaf-deep; }
+  .btn-plain { @apply border border-edge bg-sheet text-ink hover:border-ink; }
+  .btn-danger { @apply border border-rubric/60 bg-sheet text-rubric hover:bg-rubric-wash; }
+  .btn-text { @apply min-h-11 px-0 text-leaf underline decoration-leaf/35 underline-offset-4 hover:decoration-leaf sm:min-h-9; }
+  .btn-text.danger { @apply text-rubric decoration-rubric/35 hover:decoration-rubric; }
+
+  .link { @apply text-leaf underline decoration-leaf/35 underline-offset-[3px] hover:decoration-leaf; }
+  /* Rubrication: the red-ink headings of manuscript books. */
+  .rubric { @apply font-serif text-[0.9375rem] italic text-rubric; }
+  .meta { @apply text-sm text-soft; }
+
+  .label { @apply mb-1.5 block text-sm font-medium; }
+  .hint { @apply mt-1.5 text-sm text-soft; }
+  .input {
+    @apply block w-full rounded-md border border-edge bg-sheet px-3 py-2.5 text-base text-ink placeholder:text-soft/70 sm:py-2 sm:text-[0.9375rem];
+  }
+  .input:focus-visible { @apply border-leaf outline-offset-0; }
+  textarea.input { @apply min-h-28 leading-relaxed; }
+  select.input { @apply pr-8; }
+  .choice { @apply flex min-h-11 items-start gap-2.5 py-1.5 text-[0.9375rem] sm:min-h-0; }
+  .choice input { @apply mt-1 size-4 shrink-0 accent-leaf; }
+
+  .notice { @apply border-l-2 border-leaf bg-leaf-wash/60 px-4 py-3 text-[0.9375rem]; }
+  .notice.error { @apply border-rubric bg-rubric-wash text-rubric; }
+
+  /* ---- Spacing. One set of numbers for every page; components use these and
+     nothing else, and tests/e2e/spacing.spec.ts measures them.
+       40  page header to content, and between full-width blocks (32 on phones)
+       48  between sections
+       20  from a section's rule to its content; a row's own padding
+       16  a compact row's padding
+       24  either side of a rule in the side column                            */
+  .page-title { @apply text-[2rem] leading-[1.12] sm:text-[2.6rem]; }
+  .page-lede { @apply mt-3 max-w-xl text-soft; }
+  .page-head { @apply mb-8 border-b border-rule pb-6 sm:mb-10 sm:pb-7; }
+  .page-head.plain { @apply border-b-0 pb-0 sm:pb-0; }
+  .block-gap { @apply mb-8 sm:mb-10; }
+  .section { @apply mb-12 scroll-mt-8 last:mb-0; }
+  .section-head { @apply grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-6 gap-y-0.5 border-b border-rule pb-3; }
+  /* Links in the heading row keep a comfortable target without making it taller. */
+  .section-head :is(.btn-text, .link) { @apply -my-2.5 inline-flex min-h-0 items-center py-2.5; }
+  .section-body { @apply pt-5; }
+  .row { @apply border-t border-rule py-5 first:border-t-0 first:pt-0 last:pb-0; }
+  .row-sm { @apply border-t border-rule py-4 first:border-t-0 first:pt-0 last:pb-0; }
+  .side > * + * { @apply mt-6 border-t border-rule pt-6; }
+  .side-title { @apply mb-3 text-lg leading-tight; }
+  .form { @apply max-w-xl; }
+  .links { @apply mt-2 flex flex-wrap items-center gap-x-5 gap-y-1; }
+
+  .written { @apply font-serif text-[1.0313rem] leading-[1.7] whitespace-pre-line break-words; }
+
+  dialog.sheet {
+    @apply m-auto w-[min(34rem,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-y-auto border border-rule bg-sheet p-6 text-ink shadow-[0_12px_48px_rgb(33_31_27/0.18)] sm:p-8;
+  }
+  dialog.sheet::backdrop { background: rgb(33 31 27 / 0.42); }
+}
