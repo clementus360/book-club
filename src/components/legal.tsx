@@ -1,5 +1,7 @@
+import { contactEmail } from "@/lib/env";
+
 export function Legal({ title, updated, children }: { title: string; updated: string; children: React.ReactNode }) {
-  const contact = process.env.NEXT_PUBLIC_CONTACT_EMAIL;
+  const contact = contactEmail();
   return (
     <article className="max-w-2xl pt-14 lg:pt-20 [&_h2]:mt-10 [&_h2]:mb-3 [&_h2]:text-xl [&_p]:mb-4">
       <h1 className="page-title">{title}</h1>

@@ -25,13 +25,15 @@ With Docker you can use a local Supabase instead: `npx supabase start`, then cop
 
 | Variable | Needed | What it is for |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | yes | Project URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes | Publishable key. `NEXT_PUBLIC_SUPABASE_ANON_KEY` is also accepted |
+| `SUPABASE_URL` | yes | Project URL |
+| `SUPABASE_PUBLISHABLE_KEY` | yes | Publishable key |
 | `SUPABASE_SECRET_KEY` | yes, server only | The `sb_secret_…` key. `SUPABASE_SERVICE_ROLE_KEY` is also accepted. One call, `import_book()`, so only records this server fetched enter the shared catalogue. Also derives the key that signs search results |
-| `NEXT_PUBLIC_SITE_URL` | in production | Invitation and email links. Falls back to the Vercel production domain |
+| `SITE_URL` | in production | Invitation and email links. Falls back to the Vercel production domain |
 | `GOOGLE_BOOKS_API_KEY` | no, server only | Without it, Google's shared anonymous quota applies and is often exhausted (HTTP 429). Open Library and manual entry carry on regardless |
 | `OPEN_LIBRARY_CONTACT` | no | Contact address added to the User-Agent sent to Open Library, as they ask of regular users |
-| `NEXT_PUBLIC_CONTACT_EMAIL` | no | Shown on the privacy and terms pages |
+| `CONTACT_EMAIL` | no | Shown on the privacy and terms pages |
+
+All of these are read on the server only, so none needs a `NEXT_PUBLIC_` prefix. The prefixed names (`NEXT_PUBLIC_SUPABASE_URL` and so on) still work, except that the secret and API keys must never have one.
 
 ### Supabase Auth settings
 
@@ -46,7 +48,7 @@ With Docker you can use a local Supabase instead: `npx supabase start`, then cop
 
 1. In Google Cloud, set up the consent screen, then create an OAuth client of type **Web application**. Its redirect URI is `https://<project-ref>.supabase.co/auth/v1/callback`.
 2. In Supabase, under **Authentication > Sign In / Providers > Google**, paste the client ID and secret and enable it.
-3. Run `npx supabase db push --remote`, set `NEXT_PUBLIC_GOOGLE_AUTH=1` and rebuild.
+3. Run `npx supabase db push --remote`, set `GOOGLE_AUTH=1` and rebuild.
 
 ## Deploy to Vercel
 

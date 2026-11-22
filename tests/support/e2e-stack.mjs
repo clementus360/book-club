@@ -12,8 +12,8 @@ const db = await createDatabase(server.url, "e2e");
 const emulator = await startEmulator({ databaseUrl: db, port: API, stub: bookStub });
 const env = {
   ...process.env,
-  NEXT_PUBLIC_SUPABASE_URL: emulator.url, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: anonKey, SUPABASE_SECRET_KEY: serviceKey,
-  NEXT_PUBLIC_GOOGLE_AUTH: "1", NEXT_PUBLIC_SITE_URL: `http://localhost:${APP}`,
+  SUPABASE_URL: emulator.url, SUPABASE_PUBLISHABLE_KEY: anonKey, SUPABASE_SECRET_KEY: serviceKey,
+  GOOGLE_AUTH: "1", SITE_URL: `http://localhost:${APP}`,
   ...(live ? {} : { OPEN_LIBRARY_URL: emulator.url + "/stub/ol", GOOGLE_BOOKS_URL: emulator.url + "/stub/gb" }),
 };
 let child;
