@@ -25,8 +25,11 @@
   --hero-texture-blend: multiply;
 }
 
-.hero-art { margin-top: -0.5rem; }
-@media (min-width: 64rem) { .hero-art { margin-top: -2rem; } }
+/* The graphic has empty room at its top for characters to rise into. Tuck that
+   under the header, and let clicks through to whatever it overlaps. */
+.hero-art { margin-top: -0.5rem; pointer-events: none; }
+.hero-controls { pointer-events: auto; }
+@media (min-width: 64rem) { .hero-art { margin-top: -1.75rem; } }
 .hero-stage { position: relative; width: 100%; isolation: isolate; user-select: none; }
 .hero-slide { position: absolute; inset: 0; }
 .hero-slide[data-state="off"] { visibility: hidden; }

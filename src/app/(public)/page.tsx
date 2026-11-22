@@ -29,8 +29,8 @@ const FEATURE_ICONS = [Library, Vote, BookOpen, CalendarDays, Quote, BookMarked,
 export default function Home() {
   return (
     <>
-      <section className="grid items-center gap-x-10 gap-y-8 py-10 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)] lg:py-12">
-        <div>
+      <section className="grid items-center gap-x-10 gap-y-8 py-10 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)] lg:items-start lg:pt-0 lg:pb-10">
+        <div className="lg:pt-24">
           <h1 className="text-[2.9rem] leading-[1.02] sm:text-6xl lg:text-[4.25rem]">Good books.<br />Better<br className="hidden lg:block" /> conversations.</h1>
           <p className="mt-6 max-w-md text-lg leading-relaxed text-soft sm:text-xl">
             Commonplace gives a book club one shared place to choose what to read, read it together, and organise conversations worth having.
