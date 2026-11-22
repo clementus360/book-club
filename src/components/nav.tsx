@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { Icon } from "./icon";
+import { useUnread } from "./unread";
 
 const GLYPHS: Record<string, LucideIcon> = {
   "/app": House, "/app/current-book": BookOpen, "/app/meetings": CalendarDays, "/app/library": Library, "/app/members": Users,
@@ -42,9 +43,10 @@ export function SideLinks({ links, label }: { links: readonly (readonly [string,
 }
 
 /** Phones: the four places people go between meetings, and a sheet for the rest. */
-export function BottomBar({ hasClub, unread, children }: { hasClub: boolean; unread: number; children: React.ReactNode }) {
+export function BottomBar({ hasClub, children }: { hasClub: boolean; children: React.ReactNode }) {
   const active = useActive();
   const path = usePathname();
+  const { unread } = useUnread();
   const menu = useRef<HTMLDetailsElement>(null);
   useEffect(() => { if (menu.current) menu.current.open = false; }, [path]);
   const links = hasClub

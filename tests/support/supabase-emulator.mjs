@@ -277,6 +277,12 @@ export async function startEmulator({ databaseUrl, port, stub }) {
       if (url.pathname === "/emulator/mail") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(mail.filter((m) => m.to === url.searchParams.get("to")))); }
       if (url.pathname === "/emulator/google") { googleSays = body; res.writeHead(204); return res.end(); }
       if (url.pathname === "/emulator/delete") { await pool.query("delete from public.profiles where id = (select id from auth.users where email = $1)", [url.searchParams.get("email")]); res.writeHead(204); return res.end(); }
+      if (url.pathname === "/emulator/notify") { // many old notifications, which would take hundreds of clicks
+        await pool.query(`insert into public.notifications (user_id, club_id, type, created_at)
+          select u.id, m.club_id, 'voting_opened', now() - make_interval(hours => i) from auth.users u
+          join public.club_memberships m on m.user_id = u.id, generate_series(1, $2::int) i where u.email = $1`, [url.searchParams.get("email"), url.searchParams.get("n")]);
+        res.writeHead(204); return res.end();
+      }
       const token = (req.headers.authorization ?? "").replace(/^Bearer /i, "") || req.headers.apikey;
       const claims = readJwt(token);
       if (url.pathname.startsWith("/auth/v1")) return await auth(req, res, url, body, claims);

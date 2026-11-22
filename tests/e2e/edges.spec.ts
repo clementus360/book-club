@@ -149,7 +149,7 @@ test("recommendations: snapshots, editing, withdrawing, one club only", async ({
   await expect(dialog.getByLabel("What the club will read")).toHaveValue("First thoughts.");
   await dialog.getByRole("button", { name: "Recommend", exact: true }).click();
   await expect(dialog).toHaveCount(0);
-  await a.getByLabel("My review").fill("Second, harsher thoughts.");
+  await a.getByRole("textbox", { name: "My review" }).fill("Second, harsher thoughts.");
   await a.getByRole("button", { name: "Save review" }).click();
   await expect(a.getByText("Review saved.")).toBeVisible();
   await b.goto("/app/recommendations");

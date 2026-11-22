@@ -29,7 +29,8 @@ export const HINTS: Record<string, Hint> = {
   "Help with this page": say("Explains this page and everything you can do on it."),
   "Books we have read": say("Past books, with how they were chosen and what you said about them."),
   "All club books": say("Everything on the club’s shelf."),
-  "Mark all as read": acts("Clears the unread marks from your notifications."),
+  "Show older": say("Shows notifications from further back."),
+  "Mark all as read": say("Clears the unread marks from your notifications."),
 
   // Inviting and members
   "Invite someone": say("Make a link that lets one friend join this club."),

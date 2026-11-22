@@ -6,6 +6,7 @@ import { HelpButton } from "@/components/help-button";
 import { HintLayer } from "@/components/hint-layer";
 import { Icon } from "@/components/icon";
 import { BottomBar, CLUB_LINKS, OWN_LINKS, SideLinks } from "@/components/nav";
+import { UnreadCount, UnreadProvider } from "@/components/unread";
 import { Wordmark } from "@/components/wordmark";
 import { getViewer } from "@/lib/viewer";
 
@@ -32,13 +33,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
       <div className="border-t border-rule pt-4">
         <Link href="/app/notifications" className="flex items-center gap-2.5 py-2.5 text-[0.9688rem] text-soft hover:text-ink lg:py-1.5">
-          <Icon of={Bell} />Notifications{unread > 0 && <span className="rounded-full bg-rubric px-2 py-0.5 text-xs font-medium text-sheet">{unread}<span className="sr-only"> unread</span></span>}
+          <Icon of={Bell} />Notifications<UnreadCount />
         </Link>
       </div>
     </div>
   );
 
   return (
+    <UnreadProvider server={{ count: unread }}>
     <div className="mx-auto max-w-[82rem] min-h-dvh lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
       <a href="#main" className="sr-only z-50 bg-sheet p-3 focus:not-sr-only focus:absolute focus:top-2 focus:left-2">Skip to content</a>
       <header className="flex items-center justify-between gap-4 border-b border-rule px-5 py-2.5 lg:hidden">
@@ -65,7 +67,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </main>
       <HintLayer />
-      <BottomBar hasClub={Boolean(club)} unread={unread}>{menu}</BottomBar>
+      <BottomBar hasClub={Boolean(club)}>{menu}</BottomBar>
     </div>
+    </UnreadProvider>
   );
 }

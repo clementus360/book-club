@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { explain, isUuid, safeNext } from "@/lib/action";
+import { describeEvent } from "@/lib/events";
 import { fromNow, isTimeZone, utcToZonedInput, zonedToUtc } from "@/lib/dates";
 
 describe("time zones", () => {
@@ -48,5 +49,19 @@ describe("safety helpers", () => {
   it("checks ids", () => {
     expect(isUuid("3f0a0d0e-4f1c-4b6e-9a59-1f2b3c4d5e6f")).toBe(true);
     expect(isUuid("1 or 1=1")).toBe(false);
+  });
+});
+
+describe("events", () => {
+  const id = "0b1c0c5e-0000-4000-8000-000000000001";
+  it("names what happened when it is known", () => {
+    expect(describeEvent({ type: "recommendation_shared", reference_id: id, actor: "Ada", book: "Kindred" }).text).toBe("Ada recommended Kindred");
+    expect(describeEvent({ type: "recommendation_shared", reference_id: id, actor: "Ada" }).text).toBe("Ada recommended a book");
+    expect(describeEvent({ type: "meeting_updated", reference_id: id, actor: "Ada", meeting: "Supper" }).text).toBe("Ada changed a meeting: Supper");
+  });
+  it("leads to the archive once the book is finished", () => {
+    expect(describeEvent({ type: "voting_opened", reference_id: id, actor: "Ada" }).href).toBe("/app/selection");
+    expect(describeEvent({ type: "voting_opened", reference_id: id, actor: "Ada", finished: true }).href).toBe(`/app/archive/${id}`);
+    expect(describeEvent({ type: "book_selected", reference_id: id, actor: "Ada", finished: true }).href).toBe(`/app/archive/${id}`);
   });
 });

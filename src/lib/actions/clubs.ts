@@ -155,8 +155,3 @@ export async function updateProfile(_: ActionState | null, form: FormData): Prom
   return done("Profile saved.");
 }
 
-export async function markNotificationsRead(): Promise<void> {
-  const { supabase, userId } = await requireUser();
-  await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("user_id", userId).is("read_at", null);
-  refreshApp();
-}
