@@ -1,3 +1,5 @@
+import { Lock, NotebookPen } from "lucide-react";
+import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -79,7 +81,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
                   <ManualFields book={book} />
                 </FormDialog>
               )}
-              <Link className="link" href={`/app/add-book?like=${id}`}>Add another volume</Link>
+              <Link className="link" href={`/app/add-book?like=${id}`}><Labelled>Add another volume</Labelled></Link>
               {club && shelf.data && shelf.data.source === "added" && !clubRecs.length && !nominations.data?.length && !cycles.data?.length && (shelf.data.added_by === userId || club.role === "admin") && (
                 <ActionButton action={removeFromClub} hidden={{ club_id: club.id, book_id: id }} className="btn-text danger" pending="Removing…">Remove from club shelf</ActionButton>
               )}
@@ -88,7 +90,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
         </>
       }>
           {mine && (
-            <Section id="mine" title="My review" note="Only you can see this part of the page." aside={
+            <Section id="mine" title="My review" icon={Lock} note="Only you can see this part of the page." aside={
               <FormDialog trigger="Remove from my books" triggerClass="btn-text danger" title="Remove this book?" action={removeFromLibrary} hidden={{ book_id: id }} submit="Remove it" submitClass="btn btn-danger">
                 <p>Your rating, review and notes for {book.title} will be deleted. Anything you shared with a club, and the club’s own history, stays.</p>
               </FormDialog>
@@ -99,7 +101,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
                 <Submit>Save review</Submit>
               </ActionForm>
               <div className="border-t border-rule pt-4">
-                <Fold title="Dates, notes and favourites" note="More private details about this book.">
+                <Fold icon={NotebookPen} title="Dates, notes and favourites" note="More private details about this book.">
                   <ActionForm action={updateLibraryEntry} hidden={{ book_id: id }} className="form">
                     <div className="grid gap-x-5 sm:grid-cols-3">
                       <Select label="Status" name="status" defaultValue={mine.status}>

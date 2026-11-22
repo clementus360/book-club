@@ -1,9 +1,12 @@
 "use client";
 
+import { Labelled } from "@/components/icon";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { helpFor } from "@/lib/help";
+import { CircleQuestionMark } from "lucide-react";
+import { Icon } from "./icon";
 import { Dialog, useCloseDialog } from "./forms/dialog";
 import { hintsOff, setHintsOff } from "./hint-layer";
 
@@ -23,12 +26,12 @@ function Body() {
         <input type="checkbox" checked={!off} onChange={(e) => { setHintsOff(!e.target.checked); setOff(!e.target.checked); }} />
         <span>Explain buttons before I use them<span className="block text-sm text-soft">Rest the pointer on a button, or on a phone, tap one that does something straight away.</span></span>
       </label>
-      <Link href="/app/help" className="btn btn-plain mt-5" onClick={close}>Read the full guide</Link>
+      <Link href="/app/help" className="btn btn-plain mt-5" onClick={close}><Labelled>Read the full guide</Labelled></Link>
     </>
   );
 }
 
 export function HelpButton({ className }: { className: string }) {
   const title = helpFor(usePathname()).title;
-  return <Dialog trigger={<>Help<span className="hidden sm:inline"> with this page</span></>} triggerClass={className} title={title}><Body /></Dialog>;
+  return <Dialog trigger={<><Icon of={CircleQuestionMark} /><span>Help<span className="hidden sm:inline"> with this page</span></span></>} triggerClass={className} title={title}><Body /></Dialog>;
 }

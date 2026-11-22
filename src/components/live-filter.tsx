@@ -1,7 +1,9 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
+import { Icon } from "./icon";
 
 function useParam(name: string) {
   const router = useRouter();
@@ -32,9 +34,10 @@ export function LiveFilter({ label }: { label: string }) {
   }, [value]);
 
   return (
-    <div role="search" className="min-w-0 flex-1 sm:w-52 sm:flex-none">
+    <div role="search" className="relative min-w-0 flex-1 sm:w-52 sm:flex-none">
       <label htmlFor="q" className="sr-only">{label}</label>
-      <input id="q" type="search" value={value} onChange={(e) => setValue(e.target.value)} placeholder={label} autoComplete="off" className="input" aria-busy={param.pending} />
+      <input id="q" type="search" value={value} onChange={(e) => setValue(e.target.value)} placeholder={label} autoComplete="off" className="input pl-9" aria-busy={param.pending} />
+      <Icon of={Search} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-soft" />
     </div>
   );
 }

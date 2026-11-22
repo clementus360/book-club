@@ -1,8 +1,10 @@
 "use client";
 
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { useState } from "react";
 import { submitBallot } from "@/lib/actions/cycles";
 import { BookCover } from "./book-cover";
+import { Icon } from "./icon";
 import { ActionForm, Submit } from "./forms/action-form";
 
 type Entry = { id: string; book: { title: string; authors: string[]; cover_url: string | null } };
@@ -33,8 +35,8 @@ export function Ballot({ cycleId, entries, submitted }: { cycleId: string; entri
               <span className="meta block truncate">{book.authors.join(", ")}</span>
             </span>
             <span className="flex shrink-0">
-              <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} aria-label={`Move ${book.title} up`} className="grid size-11 place-items-center text-lg hover:bg-leaf-wash disabled:opacity-25">↑</button>
-              <button type="button" disabled={i === order.length - 1} onClick={() => move(i, i + 1)} aria-label={`Move ${book.title} down`} className="grid size-11 place-items-center text-lg hover:bg-leaf-wash disabled:opacity-25">↓</button>
+              <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} aria-label={`Move ${book.title} up`} className="grid size-11 place-items-center text-lg hover:bg-leaf-wash disabled:opacity-25"><Icon of={ArrowUp} size="1.25rem" /></button>
+              <button type="button" disabled={i === order.length - 1} onClick={() => move(i, i + 1)} aria-label={`Move ${book.title} down`} className="grid size-11 place-items-center text-lg hover:bg-leaf-wash disabled:opacity-25"><Icon of={ArrowDown} size="1.25rem" /></button>
             </span>
           </li>
         ))}

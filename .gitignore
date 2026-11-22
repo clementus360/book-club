@@ -46,3 +46,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# source artwork for the homepage (large; public/hero is what ships)
+/hero-art/*
+!/hero-art/README.md

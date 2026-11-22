@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { ManualFields } from "@/components/manual-fields";
 import { resolveManual, resolveSearchResult, type Candidate, type Resolution } from "@/lib/actions/books";
@@ -8,6 +9,7 @@ import { languageName } from "@/lib/books/normalize";
 import { SOURCE_LABELS, type SearchResult } from "@/lib/books/types";
 import type { Tables } from "@/lib/database.types";
 import { BookCover } from "./book-cover";
+import { Icon } from "./icon";
 
 type Found = { local: Candidate[]; results: SearchResult[]; unavailable: string[] };
 /** Answers already received, for as long as the tab is open. */
@@ -128,7 +130,10 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
           <form role="search" className="form" onSubmit={(e) => { e.preventDefault(); stopWaiting(); if ([...tidy(query)].length > 1) void ask(query, "all"); }}>
             <div>
               <label htmlFor="book-query" className="label">Title, author or ISBN, in any language</label>
-              <input id="book-query" type="search" value={query} onChange={(e) => typed(e.target.value)} className="input" autoComplete="off" enterKeyHint="search" maxLength={200} aria-describedby="book-query-hint" />
+              <div className="relative">
+                <input id="book-query" type="search" value={query} onChange={(e) => typed(e.target.value)} className="input pl-9" autoComplete="off" enterKeyHint="search" maxLength={200} aria-describedby="book-query-hint" />
+                <Icon of={Search} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-soft" />
+              </div>
               <p id="book-query-hint" className="hint">Just start typing. Results appear as you go.</p>
             </div>
           </form>

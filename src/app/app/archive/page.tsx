@@ -1,3 +1,4 @@
+import { BookCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookCover } from "@/components/book-cover";
@@ -18,7 +19,7 @@ export default async function Archive() {
       <PageHeader kicker={club.name} title="Books we have read">What you chose, when you met and what you said.</PageHeader>
       <Toolbar label="Club shelf" tabs={[{ href: "/app/library", label: "All club books", current: false }, { href: "/app/archive", label: "Books we have read", current: true }]} />
       {cycles.length === 0 ? (
-        <Empty title="You have not finished a book together yet">When the club finishes a book, everything about it is kept here.</Empty>
+        <Empty icon={BookCheck} title="You have not finished a book together yet">When the club finishes a book, everything about it is kept here.</Empty>
       ) : (
         <ol>
           {cycles.map((c) => c.book && (

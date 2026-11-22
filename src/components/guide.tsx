@@ -1,5 +1,9 @@
+import { BookOpen, BookPlus, Check, MessagesSquare, Vote } from "lucide-react";
 import Link from "next/link";
+import { Icon, Labelled } from "./icon";
 import { STEPS, type NextStep } from "@/lib/guide";
+
+const GLYPHS = [BookPlus, Vote, BookOpen, MessagesSquare];
 
 /** Where the club is: four steps, every time. */
 export function Steps({ current }: { current: number | null }) {
@@ -10,7 +14,7 @@ export function Steps({ current }: { current: number | null }) {
         return (
           <li key={s.name} aria-current={state === "now" ? "step" : undefined}
             className={`border-t-2 pt-2 ${state === "now" ? "border-rubric" : state === "done" ? "border-leaf" : "border-rule"}`}>
-            <span className={`block font-serif text-[0.9375rem] leading-tight ${state === "now" ? "sm:text-lg" : "text-soft sm:text-base"}`}><span className="hidden sm:inline">{i + 1}. </span>{s.name}</span>
+            <span className={`block font-serif text-[0.9375rem] leading-tight ${state === "now" ? "sm:text-lg" : "text-soft sm:text-base"}`}><span className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-1.5"><Icon of={state === "done" ? Check : GLYPHS[i]!} className={state === "now" ? "text-rubric" : state === "done" ? "text-leaf" : ""} /><span><span className="hidden sm:inline">{i + 1}. </span>{s.name}</span></span></span>
             <span className="meta mt-0.5 hidden sm:block">{s.what}</span>
             <span className="sr-only">{state === "done" ? "Done." : state === "now" ? "You are here." : "Still to come."}</span>
           </li>
@@ -26,7 +30,7 @@ export function NextStepBox({ step }: { step: NextStep }) {
       <p className="rubric mb-1">{step.waiting ? "Nothing you have to do" : "What to do now"}</p>
       <h2 id="now" className="text-2xl leading-tight sm:text-3xl">{step.title}</h2>
       <p className="mt-2 max-w-prose">{step.body}</p>
-      {step.action && <Link href={step.action.href} className={`btn mt-5 ${step.waiting ? "btn-plain" : "btn-primary"}`}>{step.action.label}</Link>}
+      {step.action && <Link href={step.action.href} className={`btn mt-5 ${step.waiting ? "btn-plain" : "btn-primary"}`}><Labelled>{step.action.label}</Labelled></Link>}
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ActionForm, Submit } from "@/components/forms/action-form";
@@ -14,7 +15,7 @@ export const metadata: Metadata = { title: "Start a club" };
 export default async function Onboarding() {
   const { profile, clubs } = await getViewer();
   return (
-    <Shell wide home={clubs.length ? "/app" : "/onboarding"} action={<form action={signOut}><button className="btn-text">Sign out</button></form>}
+    <Shell wide home={clubs.length ? "/app" : "/onboarding"} action={<form action={signOut}><button className="btn-text"><Labelled>Sign out</Labelled></button></form>}
       title={clubs.length ? "Start another club" : `Welcome, ${profile.display_name}`} lede="You will be shown what to do at every step.">
       <WithMargin margin={
         <>

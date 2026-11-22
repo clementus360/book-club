@@ -1,3 +1,5 @@
+import { Library } from "lucide-react";
+import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookLine } from "@/components/book-line";
@@ -33,12 +35,12 @@ export default async function ClubLibrary({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <PageHeader kicker={club.name} title="Club shelf" action={<Link className="btn btn-primary" href="/app/add-book?to=club">Add a book</Link>}>Every book connected with this club. Adding one here does not put it in the vote.</PageHeader>
+      <PageHeader kicker={club.name} title="Club shelf" action={<Link className="btn btn-primary" href="/app/add-book?to=club"><Labelled>Add a book</Labelled></Link>}>Every book connected with this club. Adding one here does not put it in the vote.</PageHeader>
       <Toolbar label="Club shelf" tabs={[{ href: "/app/library", label: "All club books", current: true }, { href: "/app/archive", label: "Books we have read", current: false }]}>
         {all.length > 0 && <><LiveSelect name="show" label="Which books to show" options={FILTERS} /><LiveFilter label="Search the shelf" /></>}
       </Toolbar>
       {all.length === 0 ? (
-        <Empty title="No books here yet" action={<Link className="btn btn-primary" href="/app/add-book?to=club">Add a book</Link>}>Books appear here when someone adds, recommends or nominates one.</Empty>
+        <Empty icon={Library} title="No books here yet" action={<Link className="btn btn-primary" href="/app/add-book?to=club"><Labelled>Add a book</Labelled></Link>}>Books appear here when someone adds, recommends or nominates one.</Empty>
       ) : (
         <div>
           {list.length === 0 ? <Empty title="Nothing here matches" action={<Link className="btn btn-plain" href="/app/library">Show everything</Link>} /> : list.map((b) => (

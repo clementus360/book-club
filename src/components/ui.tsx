@@ -1,17 +1,19 @@
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { BookCover } from "./book-cover";
+import { Icon } from "./icon";
 
 /**
  * Every page opens the same way: a kicker, a title, and a sentence saying what
  * the page is for. `plain` drops the rule where the step strip follows.
  */
-export function PageHeader({ kicker, title, children, action, plain = false }: { kicker: ReactNode; title: ReactNode; children?: ReactNode; action?: ReactNode; plain?: boolean }) {
+export function PageHeader({ kicker, icon, title, children, action, plain = false }: { kicker: ReactNode; icon?: LucideIcon; title: ReactNode; children?: ReactNode; action?: ReactNode; plain?: boolean }) {
   return (
     <header className={`page-head ${plain ? "plain" : ""}`}>
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
         <div className="max-w-2xl min-w-0">
-          <p className="rubric mb-1.5">{kicker}</p>
+          <p className="rubric mb-1.5">{icon && <Icon of={icon} size="0.95em" className="mr-1.5 -mt-0.5" />}{kicker}</p>
           <h1 className="page-title">{title}</h1>
           {children && <div className="page-lede">{children}</div>}
         </div>
@@ -45,13 +47,13 @@ export function BookHeader({ book, kicker, href, facts, action, plain = false }:
 }
 
 /** A heading, a rule, then the content. The heading row never wraps its link away. */
-export function Section({ title, aside, note, children, id }: { title: ReactNode; aside?: ReactNode; note?: string; children: ReactNode; id?: string }) {
+export function Section({ title, aside, note, icon, children, id }: { title: ReactNode; aside?: ReactNode; note?: string; icon?: LucideIcon; children: ReactNode; id?: string }) {
   return (
     <section id={id} className="section">
       <div className="section-head">
         <h2 className="min-w-0 text-xl leading-snug">{title}</h2>
         {aside && <div className="whitespace-nowrap">{aside}</div>}
-        {note && <p className="meta col-span-full">{note}</p>}
+        {note && <p className="meta col-span-full">{icon && <Icon of={icon} className="mr-1.5 -mt-0.5" />}{note}</p>}
       </div>
       <div className="section-body">{children}</div>
     </section>
@@ -59,9 +61,10 @@ export function Section({ title, aside, note, children, id }: { title: ReactNode
 }
 
 /** A whole page, or a whole tab, with nothing in it yet. */
-export function Empty({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
+export function Empty({ title, icon, children, action }: { title: string; icon?: LucideIcon; children?: ReactNode; action?: ReactNode }) {
   return (
     <div>
+      {icon && <Icon of={icon} size="2rem" className="mb-3 block text-rubric" />}
       <p className="font-serif text-xl leading-snug">{title}</p>
       {children && <div className="mt-1.5 max-w-prose text-soft">{children}</div>}
       {action && <div className="mt-5 flex flex-wrap gap-3">{action}</div>}
@@ -93,10 +96,10 @@ export function Facts({ children }: { children: ReactNode }) {
   return <dl className="space-y-4">{children}</dl>;
 }
 
-export function Fact({ term, children }: { term: string; children: ReactNode }) {
+export function Fact({ term, icon, children }: { term: string; icon?: LucideIcon; children: ReactNode }) {
   return (
     <div>
-      <dt className="text-sm text-soft">{term}</dt>
+      <dt className="text-sm text-soft">{icon && <Icon of={icon} className="mr-1.5 -mt-0.5" />}{term}</dt>
       <dd className="mt-0.5">{children}</dd>
     </div>
   );

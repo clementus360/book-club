@@ -1,3 +1,5 @@
+import { CalendarDays, Check, CircleQuestionMark, MapPin, UserRound, X } from "lucide-react";
+import { Icon, Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -54,7 +56,7 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
             <Side title="Are you coming?">
               <div className="flex flex-wrap gap-2">
                 {ANSWERS.map(([value, label]) => (
-                  <ActionButton key={value} action={setAttendance} hidden={{ meeting_id: id, attendance: value }} className={`btn ${mine === value ? "btn-primary" : "btn-plain"}`} pending="…">{label}{mine === value && <span className="sr-only"> (your answer)</span>}</ActionButton>
+                  <ActionButton key={value} action={setAttendance} hidden={{ meeting_id: id, attendance: value }} className={`btn ${mine === value ? "btn-primary" : "btn-plain"}`} pending="…"><Icon of={value === "going" ? Check : value === "maybe" ? CircleQuestionMark : X} />{label}{mine === value && <span className="sr-only"> (your answer)</span>}</ActionButton>
                 ))}
               </div>
             </Side>
@@ -72,7 +74,7 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
           {isAdmin && (
             <Side>
               <div className="flex flex-col items-start gap-3">
-                <Link className="btn btn-plain" href={`/app/meetings/${id}/edit`}>Edit meeting</Link>
+                <Link className="btn btn-plain" href={`/app/meetings/${id}/edit`}><Labelled>Edit meeting</Labelled></Link>
                 {meeting.status === "scheduled" ? (
                   <FormDialog trigger="Cancel meeting" triggerClass="btn-text danger" title="Cancel this meeting?" action={setMeetingStatus} hidden={{ meeting_id: id, status: "cancelled" }} submit="Cancel the meeting" submitClass="btn btn-danger">
                     <p>Everyone in the club will be notified. The record is kept, and you can restore it.</p>
@@ -87,9 +89,9 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
       }>
         <Section title="When and where">
           <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
-            <Fact term="When"><span className={`font-serif text-xl leading-snug ${meeting.status === "cancelled" ? "line-through" : ""}`}>{formatWeekday(meeting.starts_at, meeting.timezone)}<br />{formatTime(meeting.starts_at, meeting.timezone)}</span><span className="meta block">{zoneLabel(meeting.timezone, meeting.starts_at)}</span></Fact>
-            <Fact term="Where"><span className="font-serif text-xl leading-snug whitespace-pre-line">{meeting.location ?? "To be decided"}</span></Fact>
-            <Fact term="Discussion leader">{meeting.discussion_leader_id ? nameOf(meeting.leader) : "To be decided"}</Fact>
+            <Fact icon={CalendarDays} term="When"><span className={`font-serif text-xl leading-snug ${meeting.status === "cancelled" ? "line-through" : ""}`}>{formatWeekday(meeting.starts_at, meeting.timezone)}<br />{formatTime(meeting.starts_at, meeting.timezone)}</span><span className="meta block">{zoneLabel(meeting.timezone, meeting.starts_at)}</span></Fact>
+            <Fact icon={MapPin} term="Where"><span className="font-serif text-xl leading-snug whitespace-pre-line">{meeting.location ?? "To be decided"}</span></Fact>
+            <Fact icon={UserRound} term="Discussion leader">{meeting.discussion_leader_id ? nameOf(meeting.leader) : "To be decided"}</Fact>
           </dl>
         </Section>
         {meeting.description && <Section title="About this meeting"><p className="written max-w-prose">{meeting.description}</p></Section>}

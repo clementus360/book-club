@@ -1,3 +1,5 @@
+import { BookOpen, BookPlus, Vote } from "lucide-react";
+import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Ballot } from "@/components/ballot";
@@ -66,7 +68,7 @@ export default async function Selection() {
   return (
     <>
       <PageHeader plain={!started} kicker={started ? "Our book" : "Choosing a book"} title={started ? "How we chose" : cycle.status === "nominating" && mine ? "You have nominated a book" : STATUS_LABEL[cycle.status]}
-        action={cycle.status === "nominating" && !mine && <Link className="btn btn-primary" href="/app/add-book?to=nominate">Nominate a book</Link>}>
+        action={cycle.status === "nominating" && !mine && <Link className="btn btn-primary" href="/app/add-book?to=nominate"><Labelled>Nominate a book</Labelled></Link>}>
         {cycle.status === "nominating" && <p>{mine ? "You can change or withdraw it until nominations close. Voting comes next." : "Put forward one book for the club to read. Voting comes next."}</p>}
         {deadline && !started && <p>{deadline.label} {fromNow(deadline.at)}, on {formatDateTime(deadline.at, club.timezone)}.</p>}
       </PageHeader>
@@ -76,10 +78,10 @@ export default async function Selection() {
         <>
           <Side>
             <Facts>
-              {started || <Fact term="Nominations close">{formatDateTime(cycle.nomination_closes_at, club.timezone)}</Fact>}
-              {started || <Fact term="Voting closes">{formatDateTime(cycle.voting_closes_at, club.timezone)}</Fact>}
-              {cycle.runoff_closes_at && !started && <Fact term="Tie-break closes">{formatDateTime(cycle.runoff_closes_at, club.timezone)}</Fact>}
-              <Fact term="Reading">{dayRange(cycle.reading_starts_at, cycle.reading_ends_at, club.timezone)}</Fact>
+              {started || <Fact icon={BookPlus} term="Nominations close">{formatDateTime(cycle.nomination_closes_at, club.timezone)}</Fact>}
+              {started || <Fact icon={Vote} term="Voting closes">{formatDateTime(cycle.voting_closes_at, club.timezone)}</Fact>}
+              {cycle.runoff_closes_at && !started && <Fact icon={Vote} term="Tie-break closes">{formatDateTime(cycle.runoff_closes_at, club.timezone)}</Fact>}
+              <Fact icon={BookOpen} term="Reading">{dayRange(cycle.reading_starts_at, cycle.reading_ends_at, club.timezone)}</Fact>
             </Facts>
           </Side>
           {isAdmin && (
@@ -96,7 +98,7 @@ export default async function Selection() {
                   </FormDialog>
                 )}
                 <details className="w-full">
-                  <summary className="btn-text inline-flex items-center">For administrators</summary>
+                  <summary className="btn-text inline-flex items-center"><Labelled>For administrators</Labelled></summary>
                   <div className="mt-2 flex flex-col items-start gap-3">
                 {["nominations_closed", "voting", "runoff", "awaiting_decision"].includes(cycle.status) && (
                   <FormDialog trigger="Give more time to nominate" title="Give more time to nominate?" action={reopenNominations} hidden={hidden} submit="Open nominations again" submitClass="btn btn-danger">
@@ -124,7 +126,7 @@ export default async function Selection() {
         </>
       }>
         {started && cycle.book && (
-          <Section title={cycle.book.title} aside={<Link className="link" href="/app/current-book">Back to the book</Link>}>
+          <Section title={cycle.book.title} aside={<Link className="link" href="/app/current-book"><Labelled>Back to the book</Labelled></Link>}>
             {rounds.length ? <Results cycle={cycle} nominations={nominations} rounds={rounds} results={results} /> : <p className="text-soft">{cycle.decision_method && METHOD_LABEL[cycle.decision_method]}. {cycle.decision_reason}</p>}
           </Section>
         )}
@@ -172,8 +174,8 @@ export default async function Selection() {
             ) : nominations.map((n) => (
               <BookLine key={n.id} book={n.book} aside={n.nominated_by === userId && cycle.status === "nominating" && (
                 <>
-                  <Link className="btn-text inline-flex items-center" href={`/app/add-book?to=nominate&book=${n.book_id}`}>Edit</Link>
-                  <Link className="btn-text inline-flex items-center" href="/app/add-book?to=nominate">Change book</Link>
+                  <Link className="btn-text inline-flex items-center" href={`/app/add-book?to=nominate&book=${n.book_id}`}><Labelled>Edit</Labelled></Link>
+                  <Link className="btn-text inline-flex items-center" href="/app/add-book?to=nominate"><Labelled>Change book</Labelled></Link>
                   <ActionButton action={withdrawNomination} hidden={{ nomination_id: n.id }} className="btn-text danger" pending="Withdrawing…">Withdraw</ActionButton>
                 </>
               )}>

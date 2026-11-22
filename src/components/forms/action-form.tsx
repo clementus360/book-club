@@ -2,7 +2,9 @@
 
 import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import type { ActionState } from "@/lib/action";
+import { Icon, Labelled } from "../icon";
 
 export type FormAction = (state: ActionState | null, form: FormData) => Promise<ActionState>;
 
@@ -47,7 +49,7 @@ export function ActionForm({ action, children, className, onDone, resetOnDone = 
       {Object.entries(hidden ?? {}).map(([k, v]) => v != null && <input key={k} type="hidden" name={k} value={v} />)}
       {children}
       <div aria-live="polite">
-        {state?.message && <p className={`notice mt-4 ${state.ok ? "" : "error"}`}>{state.message}</p>}
+        {state?.message && <p className={`notice mt-4 ${state.ok ? "" : "error"}`}><Icon of={state.ok ? CircleCheck : CircleAlert} className="mt-[0.2em]" /><span>{state.message}</span></p>}
       </div>
     </form>
   );
@@ -59,7 +61,7 @@ export function Submit({ children, className = "btn btn-primary", pending: pendi
   const { pending } = useFormStatus();
   return (
     <button type="submit" className={className} aria-disabled={pending} {...rest} onClick={(e) => { if (pending) e.preventDefault(); }}>
-      {pending ? pendingLabel : children}
+      {pending ? pendingLabel : typeof children === "string" ? <Labelled>{children}</Labelled> : children}
     </button>
   );
 }

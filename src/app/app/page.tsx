@@ -1,7 +1,9 @@
+import { Icon, Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookCover } from "@/components/book-cover";
 import { authorsOf } from "@/components/book-line";
+import { eventIcon } from "@/components/event-icon";
 import { isUpcoming, MeetingLine } from "@/components/meeting-line";
 import { NextStepBox, Steps } from "@/components/guide";
 import { nameOf, PageHeader, Section, Side, WithMargin } from "@/components/ui";
@@ -41,18 +43,18 @@ export default async function Home() {
             <ul className="space-y-3">
               {must(activity).map((e) => {
                 const { text, href } = describeEvent({ ...e, actor: nameOf(e.actor), book: e.book?.title });
-                return <li key={e.id} className="leading-snug"><Link href={href} className="underline-offset-4 hover:underline">{text}</Link><span className="meta block">{fromNow(e.created_at)}</span></li>;
+                return <li key={e.id} className="flex gap-2.5 leading-snug"><Icon of={eventIcon(e.type)} className="mt-0.5 text-soft" /><span><Link href={href} className="underline-offset-4 hover:underline">{text}</Link><span className="meta block">{fromNow(e.created_at)}</span></span></li>;
               })}
             </ul>
           </Side>
           <Side title="Just for you">
             {must(shelf).length > 0 && <ul className="mb-3 space-y-1.5">{must(shelf).map((s) => <li key={s.book.id}><Link className="font-serif underline-offset-4 hover:underline" href={`/app/books/${s.book.id}`}>{s.book.title}</Link></li>)}</ul>}
-            <Link className="link" href="/app/my-library">Open My books</Link>
+            <Link className="link" href="/app/my-library"><Labelled>Open My books</Labelled></Link>
           </Side>
         </>
       }>
         {cycle?.status === "reading" && cycle.book ? (
-          <Section title="Reading now" aside={<Link className="link" href="/app/current-book">Open</Link>}>
+          <Section title="Reading now" aside={<Link className="link" href="/app/current-book"><Labelled>Open</Labelled></Link>}>
             <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-5 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-6">
               <Link href="/app/current-book" tabIndex={-1} aria-hidden><BookCover book={cycle.book} className="w-full" priority /></Link>
               <div className="self-center">
@@ -64,16 +66,16 @@ export default async function Home() {
             </div>
           </Section>
         ) : nominations.length > 0 ? (
-          <Section title="Nominated so far" aside={<Link className="link" href="/app/selection">See all</Link>}>
+          <Section title="Nominated so far" aside={<Link className="link" href="/app/selection"><Labelled>See all</Labelled></Link>}>
             <ul className="flex flex-wrap gap-4">{nominations.map((n) => <li key={n.id}><Link href={`/app/books/${n.book_id}`} className="block"><BookCover book={n.book} className="w-16 sm:w-20" /><span className="sr-only">{n.book.title}</span></Link></li>)}</ul>
           </Section>
         ) : null}
 
-        <Section title="Next meeting" aside={<Link className="link" href="/app/meetings">See all</Link>}>
+        <Section title="Next meeting" aside={<Link className="link" href="/app/meetings"><Labelled>See all</Labelled></Link>}>
           {next ? <MeetingLine m={next} /> : <p className="text-soft">Nothing is arranged yet.</p>}
         </Section>
 
-        <Section title="Recommended by members" aside={must(recs).length > 0 && <Link className="link" href="/app/recommendations">See all</Link>}>
+        <Section title="Recommended by members" aside={must(recs).length > 0 && <Link className="link" href="/app/recommendations"><Labelled>See all</Labelled></Link>}>
           {must(recs).length === 0 ? <p className="text-soft">No one has recommended a book to this club yet.</p> : (
             <ul className="grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-4">
               {must(recs).map((r) => (

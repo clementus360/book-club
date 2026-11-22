@@ -1,3 +1,5 @@
+import { Bookmark, BookMarked, BookOpen, Check, Heart, Lock, MessageSquareText, NotebookPen } from "lucide-react";
+import { Icon, Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookLine } from "@/components/book-line";
@@ -11,6 +13,8 @@ export const metadata: Metadata = { title: "My books" };
 
 const FILTERS = [["", "All"], ["currently_reading", "Reading now"], ["want_to_read", "Want to read"], ["read", "Read"], ["favourites", "Favourites"]] as const;
 const LABEL: Record<Enums<"reading_status">, string> = { currently_reading: "Reading now", want_to_read: "Want to read", read: "Read" };
+
+const GLYPH = { currently_reading: BookOpen, want_to_read: Bookmark, read: Check } as const;
 
 export default async function MyLibrary({ searchParams }: { searchParams: Promise<{ show?: string; q?: string }> }) {
   const { show = "", q = "" } = await searchParams;
@@ -29,9 +33,9 @@ export default async function MyLibrary({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageHeader kicker="Only you can see this" title="My books" action={<Link className="btn btn-primary" href="/app/add-book">Add a book</Link>}>Keep track of what you have read and want to read. Open a book to rate it, review it or recommend it.</PageHeader>
+      <PageHeader icon={Lock} kicker="Only you can see this" title="My books" action={<Link className="btn btn-primary" href="/app/add-book"><Labelled>Add a book</Labelled></Link>}>Keep track of what you have read and want to read. Open a book to rate it, review it or recommend it.</PageHeader>
       {all.length === 0 ? (
-        <Empty title="You have not added any books yet" action={<Link className="btn btn-primary" href="/app/add-book">Add your first book</Link>}>
+        <Empty icon={BookMarked} title="You have not added any books yet" action={<Link className="btn btn-primary" href="/app/add-book"><Labelled>Add your first book</Labelled></Link>}>
           Start with one you loved. Your ratings, reviews and notes stay private unless you choose to share something with a club.
         </Empty>
       ) : (
@@ -45,11 +49,11 @@ export default async function MyLibrary({ searchParams }: { searchParams: Promis
             return (
               <BookLine key={e.id} book={e.book}>
                 <p className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm">
-                  <span>{LABEL[e.status]}{e.date_finished && e.status === "read" && `, finished ${formatPlainDate(e.date_finished)}`}</span>
-                  {e.is_favourite && <span className="text-rubric">Favourite</span>}
+                  <span className="with-icon"><Icon of={GLYPH[e.status]} />{LABEL[e.status]}{e.date_finished && e.status === "read" && `, finished ${formatPlainDate(e.date_finished)}`}</span>
+                  {e.is_favourite && <span className="with-icon text-rubric"><Icon of={Heart} />Favourite</span>}
                   <Rating value={review?.rating ?? null} />
-                  {review?.review_text && <span className="text-soft">Reviewed</span>}
-                  {e.private_notes && <span className="text-soft">Notes</span>}
+                  {review?.review_text && <span className="with-icon text-soft"><Icon of={MessageSquareText} />Reviewed</span>}
+                  {e.private_notes && <span className="with-icon text-soft"><Icon of={NotebookPen} />Notes</span>}
                 </p>
               </BookLine>
             );

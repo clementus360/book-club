@@ -1,0 +1,111 @@
+/* The homepage artwork. See src/lib/hero.ts for the slides.
+
+   Two fixed masks, cut from one paint splash by scripts/hero-art.mjs:
+     hero-inside  the splash itself, holding the background
+     hero-rising  the splash opened upwards, holding the character, so it can
+                  break out of the top but not the sides or the bottom
+   The masks never move. What is inside them grows, at two speeds. */
+
+.hero-art {
+  /* ---------------------------------------------------------------- LOOK --
+     Change these to give every picture the same finish. They apply to all
+     slides, to background and character alike.
+
+     Filter, for example:
+       --hero-filter: grayscale(0.35) sepia(0.2) contrast(1.06) saturate(0.85);
+     Texture (put the image in public/hero-look/; a repeating tile is best):
+       --hero-texture: url(/hero-look/paper.webp);
+       --hero-texture-opacity: 0.5;                                          */
+  --hero-filter: none;
+  --hero-background-filter: ; /* extra, for backgrounds only: e.g. blur(1px) */
+  --hero-character-filter: ; /* extra, for characters only */
+  --hero-texture: none;
+  --hero-texture-size: 600px;
+  --hero-texture-opacity: 0;
+  --hero-texture-blend: multiply;
+}
+
+.hero-art { margin-top: -0.5rem; }
+@media (min-width: 64rem) { .hero-art { margin-top: -2rem; } }
+.hero-stage { position: relative; width: 100%; isolation: isolate; user-select: none; }
+.hero-slide { position: absolute; inset: 0; }
+.hero-slide[data-state="off"] { visibility: hidden; }
+.hero-slide[data-state="on"], .hero-slide[data-state="entering"] { z-index: 1; }
+
+.hero-inside, .hero-rising {
+  position: absolute; inset: 0; overflow: hidden; isolation: isolate;
+  -webkit-mask: var(--mask) 0 0 / 100% 100% no-repeat;
+  mask: var(--mask) 0 0 / 100% 100% no-repeat;
+}
+.hero-inside { --mask: url(/hero/mask-inside.webp); }
+.hero-rising { --mask: url(/hero/mask-rising.webp); }
+
+.hero-move { position: absolute; will-change: transform; animation: var(--hero-grow-over) linear both paused; }
+.hero-move img { display: block; width: 100%; height: 100%; }
+
+.hero-background { inset: 0; transform: scale(var(--bg-from)); transform-origin: 50% 60%; animation-name: hero-background; }
+.hero-background img { object-fit: cover; filter: var(--hero-filter) var(--hero-background-filter); }
+
+/* Grows from its feet, so its head rises further out of the paint. */
+.hero-character {
+  width: var(--ch-width); left: calc(var(--ch-x) - var(--ch-width) / 2); top: var(--ch-y); aspect-ratio: var(--ch-ratio);
+  transform: scale(var(--ch-from)); transform-origin: 50% 100%; animation-name: hero-character;
+}
+.hero-character img { filter: var(--hero-filter) var(--hero-character-filter); }
+
+.hero-texture {
+  position: absolute; inset: 0; pointer-events: none;
+  background: var(--hero-texture) 0 0 / var(--hero-texture-size);
+  opacity: var(--hero-texture-opacity); mix-blend-mode: var(--hero-texture-blend);
+}
+/* On the character, only where there is character. */
+.hero-character .hero-texture { -webkit-mask: var(--ch-shape) 0 0 / 100% 100% no-repeat; mask: var(--ch-shape) 0 0 / 100% 100% no-repeat; }
+
+@keyframes hero-background { from { transform: scale(var(--bg-from)); } to { transform: scale(var(--bg-to)); } }
+@keyframes hero-character { from { transform: scale(var(--ch-from)); } to { transform: scale(var(--ch-to)); } }
+
+.hero-stage[data-moving="true"] .hero-slide:not([data-state="off"]) .hero-move { animation-play-state: running; }
+/* Starts afresh each time a slide comes round. */
+.hero-slide[data-state="off"] .hero-move { animation-name: none; }
+/* Alone, it grows and settles back instead of jumping to the start. */
+.hero-stage[data-many="false"] .hero-move { animation-direction: alternate; animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+
+/* ------------------------------------------------------- BETWEEN SLIDES --
+   The new background is brushed on over the old one, along the stroke of the
+   splash. The old character sinks back first; the new one follows the brush. */
+.hero-brush { position: absolute; inset: 0; isolation: isolate; }
+.hero-slide[data-state="entering"] .hero-brush {
+  -webkit-mask: url(/hero/brush.webp) 0 0 / 300% 100% no-repeat;
+  mask: url(/hero/brush.webp) 0 0 / 300% 100% no-repeat;
+  animation: hero-brush var(--hero-change) cubic-bezier(0.45, 0.05, 0.35, 1) both;
+}
+.hero-slide[data-state="entering"] .hero-rising { animation: hero-arrive calc(var(--hero-change) * 0.62) calc(var(--hero-change) * 0.38) cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hero-slide[data-state="entering"] .hero-character { translate: 0 0; animation-name: hero-character, hero-step-in; animation-duration: var(--hero-grow-over), calc(var(--hero-change) * 0.62); animation-delay: 0s, calc(var(--hero-change) * 0.38); animation-timing-function: linear, cubic-bezier(0.2, 0.7, 0.2, 1); }
+.hero-slide[data-state="leaving"] .hero-rising { animation: hero-leave calc(var(--hero-change) * 0.5) ease-in both; }
+.hero-slide[data-state="leaving"] .hero-character { animation-name: hero-character, hero-step-back; animation-duration: var(--hero-grow-over), calc(var(--hero-change) * 0.5); animation-timing-function: linear, ease-in; }
+
+@keyframes hero-brush { from { mask-position: 100% 0; -webkit-mask-position: 100% 0; } to { mask-position: 0 0; -webkit-mask-position: 0 0; } }
+@keyframes hero-arrive { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hero-leave { from { opacity: 1; } to { opacity: 0; } }
+@keyframes hero-step-in { from { translate: -2.5% 4%; } to { translate: 0 0; } }
+@keyframes hero-step-back { from { translate: 0 0; } to { translate: 1.5% 3%; } }
+
+.hero-controls { display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem; padding-top: 0.25rem; min-height: 2.75rem; }
+/* Quiet on purpose: it names the book without competing with the headline. */
+.hero-caption { flex: 1; min-width: 0; font-size: 0.875rem; line-height: 1.35; color: var(--color-soft); animation: hero-name 0.9s calc(var(--hero-change, 2.2s) * 0.4) ease-out both; }
+.hero-caption cite { display: block; font-family: var(--font-serif); font-style: italic; color: var(--color-ink); }
+@keyframes hero-name { from { opacity: 0; } to { opacity: 1; } }
+/* Already there when the page opens. */
+.hero-art:not(:has([data-state="entering"], [data-state="leaving"])) .hero-caption { animation-duration: 0s; animation-delay: 0s; }
+
+.hero-dot { width: 2rem; height: 2.75rem; display: grid; place-items: center; }
+.hero-dot::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; border: 1px solid var(--color-edge); }
+.hero-dot[aria-current]::before { background: var(--color-rubric); border-color: var(--color-rubric); }
+.hero-pause { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0 0.5rem; font-size: 0.875rem; color: var(--color-soft); }
+.hero-pause:hover { color: var(--color-ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-move, .hero-brush, .hero-rising, .hero-caption { animation: none !important; }
+  .hero-slide .hero-brush { -webkit-mask: none !important; mask: none !important; }
+  .hero-pause { display: none; }
+}

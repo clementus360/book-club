@@ -1,3 +1,5 @@
+import { Hourglass, PenLine, Trash2 } from "lucide-react";
+import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -14,7 +16,7 @@ export const metadata: Metadata = { title: "Club settings" };
 export default async function ClubSettings() {
   const { supabase, club } = await getViewer();
   if (!club) redirect("/app/account");
-  const header = (text: string) => <PageHeader kicker={club.name} title="Club settings" action={<Link className="btn btn-plain" href="/app/members">Members</Link>}>{text}</PageHeader>;
+  const header = (text: string) => <PageHeader kicker={club.name} title="Club settings" action={<Link className="btn btn-plain" href="/app/members"><Labelled>Members</Labelled></Link>}>{text}</PageHeader>;
 
   if (club.role !== "admin") {
     return (
@@ -32,7 +34,7 @@ export default async function ClubSettings() {
     <>
       {header("What you change here changes for everyone in the club.")}
       <Section key={club.id} title="About the club">
-        <Fold title="Name and description" note="What the club is called, and its timezone.">
+        <Fold icon={PenLine} title="Name and description" note="What the club is called, and its timezone.">
           <ClubForm club={club} part="details">
             <Field label="Club name" name="name" required maxLength={80} defaultValue={club.name} />
             <TextArea label="Description" name="description" rows={3} maxLength={2000} defaultValue={club.description ?? ""} />
@@ -40,7 +42,7 @@ export default async function ClubSettings() {
             <Field label="Image address (optional)" name="image_url" type="url" maxLength={1000} defaultValue={club.image_url ?? ""} hint="A link to an image, starting with https://" />
           </ClubForm>
         </Fold>
-        <Fold title="How long each step lasts" note="The usual number of days. You can still change them for each book.">
+        <Fold icon={Hourglass} title="How long each step lasts" note="The usual number of days. You can still change them for each book.">
           <ClubForm club={club} part="lengths">
             <div className="grid grid-cols-2 gap-x-5">
               <Field label="Nominating" name="default_nomination_days" type="number" min={1} max={90} required defaultValue={club.default_nomination_days} />
@@ -51,7 +53,7 @@ export default async function ClubSettings() {
           </ClubForm>
         </Fold>
         {members === 1 && (
-          <Fold title="Close this club" note="Deletes it for good. Only possible while you are its one member.">
+          <Fold icon={Trash2} title="Close this club" note="Deletes it for good. Only possible while you are its one member.">
             <p className="mb-4 text-soft">Its shelf and history will be deleted. My books will not.</p>
             <FormDialog trigger="Close the club" triggerClass="btn btn-danger" title={`Close ${club.name}?`} action={closeClub} hidden={{ club_id: club.id }} submit="Close the club for good" submitClass="btn btn-danger">
               <p className="mb-5">This permanently deletes the club’s shelf, books, meetings and discussion.</p>

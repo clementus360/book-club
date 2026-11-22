@@ -1,3 +1,4 @@
+import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -59,7 +60,7 @@ export default async function CurrentBook() {
           </Side>
           <Side>
             <p>{cycle.decision_method && METHOD_LABEL[cycle.decision_method]}.</p>
-            <Link className="link" href="/app/selection">See how it was chosen</Link>
+            <Link className="link" href="/app/selection"><Labelled>See how it was chosen</Labelled></Link>
           </Side>
           {isAdmin && (
             <Side id="manage">
@@ -70,7 +71,7 @@ export default async function CurrentBook() {
           )}
         </>
       }>
-        <Section title="Meetings" aside={isAdmin && <Link className="link" href="/app/meetings/new">Arrange a meeting</Link>}>
+        <Section title="Meetings" aside={isAdmin && <Link className="link" href="/app/meetings/new"><Labelled>Arrange a meeting</Labelled></Link>}>
           {meetings.length ? meetings.map((m) => <MeetingLine key={m.id} m={m} />) : <p className="text-soft">No meeting has been arranged for this book yet.</p>}
         </Section>
         <DiscussionSections data={discussion} ctx={ctx} canReview writable />

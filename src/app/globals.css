@@ -42,13 +42,14 @@
   .btn-primary { @apply bg-leaf text-sheet hover:bg-leaf-deep; }
   .btn-plain { @apply border border-edge bg-sheet text-ink hover:border-ink; }
   .btn-danger { @apply border border-rubric/60 bg-sheet text-rubric hover:bg-rubric-wash; }
-  .btn-text { @apply min-h-11 px-0 text-leaf underline decoration-leaf/35 underline-offset-4 hover:decoration-leaf sm:min-h-9; }
+  .btn-text { @apply inline-flex min-h-11 items-center gap-1.5 px-0 text-leaf underline decoration-leaf/35 underline-offset-4 hover:decoration-leaf sm:min-h-9; }
   .btn-text.danger { @apply text-rubric decoration-rubric/35 hover:decoration-rubric; }
 
   .link { @apply text-leaf underline decoration-leaf/35 underline-offset-[3px] hover:decoration-leaf; }
   /* Rubrication: the red-ink headings of manuscript books. */
   .rubric { @apply font-serif text-[0.9375rem] italic text-rubric; }
   .meta { @apply text-sm text-soft; }
+  .with-icon { @apply inline-flex items-center gap-1.5; }
 
   .label { @apply mb-1.5 block text-sm font-medium; }
   .hint { @apply mt-1.5 text-sm text-soft; }
@@ -62,6 +63,7 @@
   .choice input { @apply mt-1 size-4 shrink-0 accent-leaf; }
 
   .notice { @apply border-l-2 border-leaf bg-leaf-wash/60 px-4 py-3 text-[0.9375rem]; }
+  .notice:has(> svg) { @apply flex gap-2.5; }
   .notice.error { @apply border-rubric bg-rubric-wash text-rubric; }
 
   /* ---- Spacing. One set of numbers for every page; components use these and
@@ -79,14 +81,15 @@
   .section { @apply mb-12 scroll-mt-8 last:mb-0; }
   .section-head { @apply grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-6 gap-y-0.5 border-b border-rule pb-3; }
   /* Links in the heading row keep a comfortable target without making it taller. */
-  .section-head :is(.btn-text, .link) { @apply -my-2.5 inline-flex min-h-0 items-center py-2.5; }
+  .section-head :is(.btn-text, .link) { @apply -my-2.5 inline-flex min-h-0 items-center gap-1.5 py-2.5; }
+  .link:has(> svg) { @apply inline-flex items-center gap-1.5; }
   .section-body { @apply pt-5; }
   .row { @apply border-t border-rule py-5 first:border-t-0 first:pt-0 last:pb-0; }
   .row-sm { @apply border-t border-rule py-4 first:border-t-0 first:pt-0 last:pb-0; }
   .side > * + * { @apply mt-6 border-t border-rule pt-6; }
   .side-title { @apply mb-3 text-lg leading-tight; }
   .form { @apply max-w-xl; }
-  .links { @apply mt-2 flex flex-wrap items-center gap-x-5 gap-y-1; }
+  .links { @apply mt-2 flex flex-wrap items-center gap-x-4 gap-y-1; }
 
   .written { @apply font-serif text-[1.0313rem] leading-[1.7] whitespace-pre-line break-words; }
 

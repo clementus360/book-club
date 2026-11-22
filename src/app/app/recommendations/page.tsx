@@ -1,3 +1,5 @@
+import { ThumbsUp } from "lucide-react";
+import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookLine } from "@/components/book-line";
@@ -39,16 +41,16 @@ export default async function Recommendations({ searchParams }: { searchParams: 
       <div>
       {list.length === 0 ? (
         made ? (
-          <Empty title="You have not recommended anything yet" action={<Link className="btn btn-primary" href="/app/my-library">Open My books</Link>}>Open a book in My books and choose Recommend to club.</Empty>
+          <Empty icon={ThumbsUp} title="You have not recommended anything yet" action={<Link className="btn btn-primary" href="/app/my-library"><Labelled>Open My books</Labelled></Link>}>Open a book in My books and choose Recommend to club.</Empty>
         ) : (
-          <Empty title="No recommendations yet">{clubs.length ? "When someone recommends a book to one of your clubs, it will appear here." : "Join a club, and what its members recommend will appear here."}</Empty>
+          <Empty icon={ThumbsUp} title="No recommendations yet">{clubs.length ? "When someone recommends a book to one of your clubs, it will appear here." : "Join a club, and what its members recommend will appear here."}</Empty>
         )
       ) : list.map((r) => (
         <BookLine key={r.id} book={r.book} aside={
           <>
             {made && <EditRecommendation rec={r} currentRating={ratingOf.get(r.book_id) ?? null} />}
             {(made || adminOf.has(r.club_id)) && <ActionButton action={withdrawRecommendation} hidden={{ id: r.id }} className="btn-text danger" pending="Withdrawing…">{made ? "Withdraw" : "Remove"}</ActionButton>}
-            {!made && (owned.has(r.book_id) ? <span className="meta self-center">In My books</span> : <Link className="btn-text inline-flex items-center" href={`/app/add-book?book=${r.book_id}`}>Add to My books</Link>)}
+            {!made && (owned.has(r.book_id) ? <span className="meta self-center">In My books</span> : <Link className="btn-text inline-flex items-center" href={`/app/add-book?book=${r.book_id}`}><Labelled>Add to My books</Labelled></Link>)}
           </>
         }>
           <p className="meta">{made ? `To ${r.club?.name ?? "a club you have left"}` : `${nameOf(r.recommender)}, to ${r.club?.name}`}, {formatDate(r.created_at, r.club?.timezone)} <Rating value={r.shared_rating} /></p>

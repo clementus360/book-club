@@ -1,8 +1,10 @@
+import { Bell } from "lucide-react";
 import Link from "next/link";
 import { AccountMenu } from "@/components/account-menu";
 import { ClubSwitcher } from "@/components/club-switcher";
 import { HelpButton } from "@/components/help-button";
 import { HintLayer } from "@/components/hint-layer";
+import { Icon } from "@/components/icon";
 import { BottomBar, CLUB_LINKS, OWN_LINKS, SideLinks } from "@/components/nav";
 import { Wordmark } from "@/components/wordmark";
 import { getViewer } from "@/lib/viewer";
@@ -29,8 +31,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <SideLinks label="Just for you" links={OWN_LINKS} />
       </div>
       <div className="border-t border-rule pt-4">
-        <Link href="/app/notifications" className="block py-2.5 text-[0.9688rem] text-soft hover:text-ink lg:py-1.5">
-          Notifications{unread > 0 && <span className="ml-2 rounded-full bg-rubric px-2 py-0.5 text-xs font-medium text-sheet">{unread}<span className="sr-only"> unread</span></span>}
+        <Link href="/app/notifications" className="flex items-center gap-2.5 py-2.5 text-[0.9688rem] text-soft hover:text-ink lg:py-1.5">
+          <Icon of={Bell} />Notifications{unread > 0 && <span className="rounded-full bg-rubric px-2 py-0.5 text-xs font-medium text-sheet">{unread}<span className="sr-only"> unread</span></span>}
         </Link>
       </div>
     </div>

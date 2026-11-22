@@ -1,0 +1,46 @@
+{
+  "stageRatio": 0.882,
+  "headroom": 0.1665,
+  "rise": [
+    0.07,
+    0.88
+  ],
+  "slides": [
+    {
+      "id": "percy-jackson",
+      "background": [
+        760,
+        1360
+      ],
+      "character": [
+        640,
+        1200
+      ],
+      "characterRatio": 0.9485
+    },
+    {
+      "id": "dungeon-crawler-carl",
+      "background": [
+        760,
+        1284
+      ],
+      "character": [
+        640,
+        753
+      ],
+      "characterRatio": 0.6233
+    },
+    {
+      "id": "the-maze-runner",
+      "background": [
+        760,
+        1360
+      ],
+      "character": [
+        640,
+        1200
+      ],
+      "characterRatio": 1.15
+    }
+  ]
+}

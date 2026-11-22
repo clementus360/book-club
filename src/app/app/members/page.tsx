@@ -1,5 +1,7 @@
+import { Mail, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import { ActionButton } from "@/components/forms/action-form";
+import { Icon } from "@/components/icon";
 import { Fold } from "@/components/fold";
 import { FormDialog } from "@/components/forms/dialog";
 import { InviteDialog } from "@/components/invite";
@@ -39,7 +41,7 @@ export default async function Members() {
                 <Avatar person={m.profile} className="size-10 text-base" />
                 <div className="min-w-0 flex-1 basis-48">
                   <p className="font-serif text-lg leading-tight">{nameOf(m.profile)}{me && <span className="meta"> (you)</span>}</p>
-                  <p className="meta">{m.role === "admin" ? "Administrator" : "Member"}, joined {formatDate(m.joined_at, club.timezone)}</p>
+                  <p className="meta">{m.role === "admin" && <Icon of={ShieldCheck} className="mr-1.5 -mt-0.5 text-leaf" />}{m.role === "admin" ? "Administrator" : "Member"}, joined {formatDate(m.joined_at, club.timezone)}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-5">
                   {isAdmin && !last && <ActionButton action={setMemberRole} hidden={{ ...hidden, role: m.role === "admin" ? "member" : "admin" }} className="btn-text">{m.role === "admin" ? "Make an ordinary member" : "Make an administrator"}</ActionButton>}
@@ -75,7 +77,7 @@ export default async function Members() {
 
       {earlier.length > 0 && (
         <Section title="Earlier invitations">
-          <Fold title={`${earlier.length} ${earlier.length === 1 ? "invitation" : "invitations"}`} note="Used, stopped or run out.">
+          <Fold icon={Mail} title={`${earlier.length} ${earlier.length === 1 ? "invitation" : "invitations"}`} note="Used, stopped or run out.">
             <ul>
               {earlier.map((i) => (
                 <li key={i.id} className="row-sm text-soft">
