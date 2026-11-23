@@ -3,9 +3,11 @@ import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { volumeLabel } from "@/components/book-line";
 import { ActionButton, ActionForm, Submit } from "@/components/forms/action-form";
 import { Fold } from "@/components/fold";
+import { GetThisBook, WaysList } from "@/components/get-this-book";
 import { FormDialog } from "@/components/forms/dialog";
 import { Checkbox, Field, RatingField, Select, TextArea } from "@/components/forms/fields";
 import { ManualFields } from "@/components/manual-fields";
@@ -14,6 +16,7 @@ import { BookHeader, Fact, Facts, nameOf, Rating, Section, Side, WithMargin } fr
 import { isUuid } from "@/lib/action";
 import { addToClub, addToLibrary, removeFromClub, removeFromLibrary, savePersonalReview, updateLibraryEntry, updateManualBook } from "@/lib/actions/books";
 import { languageName } from "@/lib/books/normalize";
+import { searchWays } from "@/lib/books/where";
 import { FORMAT_LABELS, SOURCE_LABELS } from "@/lib/books/types";
 import { METHOD_LABEL, STATUS_LABEL } from "@/lib/cycle";
 import { formatDate } from "@/lib/dates";
@@ -73,6 +76,9 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
               <Fact term="Details from">{SOURCE_LABELS[book.metadata_source]}</Fact>
               {club && shelf.data && <Fact term="On the club shelf">Added {shelf.data.added_by ? `by ${nameOf(shelf.data.adder)}, ` : ""}{formatDate(shelf.data.added_at, zone)}</Fact>}
             </Facts>
+          </Side>
+          <Side title="Get this book" id="get">
+            <Suspense fallback={<WaysList ways={searchWays(book)} />}><GetThisBook book={book} /></Suspense>
           </Side>
           <Side>
             <div className="flex flex-col items-start gap-3">

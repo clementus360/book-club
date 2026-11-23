@@ -87,6 +87,10 @@ supabase/migrations     schema, rules, RLS, grants
 
 **Calendars.** Nothing to set up. A meeting opens in Google or Outlook through a prefilled link. "Add to my calendar" subscribes to `/calendar/<token>.ics`, read without a session by `calendar_feed()`, the second of the two functions a signed-out caller may use. The token is derived from `SUPABASE_SECRET_KEY` and a nonce, and only its hash is stored, so replacing that key ends existing subscriptions once their owner next makes a link. Commonplace never reads anyone's calendar: dates are found by asking (`meeting_polls`).
 
+**Get this book.** Each book page lists where to read it free or borrow it (Open Library), buy the e-book (Google Play, priced for the reader's country from Vercel's `x-vercel-ip-country`), and search links for WorldCat, Amazon and AbeBooks. Lookups use stored identifiers or the ISBN, are cached for a day, stream in after the page and are skipped quietly when a service is down.
+
+**Saving after a deploy.** A page opened before a deployment holds old Server Action IDs. Forms catch that error, keep what was typed, reload once and put it back; connection failures are explained in the form rather than on the error page (`src/lib/trouble.ts`).
+
 **Search.** Typing looks in the app's own books after 200 ms and the public catalogues after 400 ms, at least 0.7 s apart, showing each catalogue’s results as they arrive (Open Library is given up on 4 s after the start once Google has answered), with answers remembered in the tab, a day's cache on the server and 60 catalogue searches per person per five minutes.
 
 **Books.** One row is one publication. The same provider id, or the same ISBN with compatible volumes, reuses a row. Anything less certain is put to the reader. Manual entries are visible only to the person who made them until they reach a club.

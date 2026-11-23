@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { createInvitation, type InviteState } from "@/lib/actions/clubs";
+import { trouble } from "@/lib/trouble";
 import { Dialog } from "./forms/dialog";
 import { Submit } from "./forms/action-form";
 
@@ -10,7 +11,9 @@ export function InviteDialog({ clubId, clubName, triggerClass = "btn btn-primary
 }
 
 function InviteForm({ clubId }: { clubId: string }) {
-  const [state, run] = useActionState<InviteState | null, FormData>(createInvitation, null);
+  const [state, run] = useActionState<InviteState | null, FormData>(async (previous, data) => {
+    try { return await createInvitation(previous, data); } catch (error) { return trouble(error); }
+  }, null);
   const [copied, setCopied] = useState<string | null>(null);
 
   async function copy(link: string) {

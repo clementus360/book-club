@@ -10,6 +10,7 @@ import { SOURCE_LABELS, type SearchResult } from "@/lib/books/types";
 import type { Tables } from "@/lib/database.types";
 import { BookCover } from "./book-cover";
 import { Icon } from "./icon";
+import { trouble } from "@/lib/trouble";
 
 type Found = { local: Candidate[]; results: SearchResult[]; unavailable: string[] };
 /** Answers already received, for as long as the tab is open. */
@@ -149,8 +150,8 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
         if (r.status === "ok") setStep({ at: "confirm", book: r.book });
         else if (r.status === "choose") setStep({ at: "choose", candidates: r.candidates, again: () => run(true) });
         else setProblem(r.message);
-      } catch {
-        setProblem("Something went wrong. Please try again.");
+      } catch (error) {
+        setProblem(trouble(error).message);
       }
     });
   }

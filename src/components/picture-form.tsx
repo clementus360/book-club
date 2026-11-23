@@ -6,6 +6,7 @@ import type { ActionState } from "@/lib/action";
 import { removePicture, uploadPicture, chooseGooglePicture } from "@/lib/actions/pictures";
 import { Icon } from "./icon";
 import { Avatar } from "./ui";
+import { trouble } from "@/lib/trouble";
 
 const SIDE = 256;
 
@@ -37,7 +38,7 @@ export function PictureForm({ person, google }: { person: { display_name: string
   const run = (action: () => Promise<ActionState>, local: string | null = null) => {
     setSaid(null);
     start(async () => {
-      const result = await action().catch((): ActionState => ({ ok: false, message: "That could not be saved. Please try again." }));
+      const result = await action().catch((error: unknown): ActionState => trouble(error));
       setSaid(result);
       setPreview(result.ok ? local : null);
     });

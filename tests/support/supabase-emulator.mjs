@@ -235,12 +235,14 @@ export async function startEmulator({ databaseUrl, port, stub }) {
 
   // ------------------------------------------------------------------ Auth
   const publicUser = (u) => ({ id: u.id, aud: "authenticated", role: "authenticated", email: u.email, user_metadata: u.raw_user_meta_data, app_metadata: {}, created_at: u.created_at, identities: [] });
+  const usedAt = new Map();
   function session(u) {
     const refresh = randomBytes(12).toString("hex");
     sessions.set(refresh, u.id);
-    const exp = Math.floor(Date.now() / 1000) + 3600;
-    const access_token = signJwt({ sub: u.id, role: "authenticated", aud: "authenticated", email: u.email, session_id: randomUUID(), iat: exp - 3600, exp });
-    return { access_token, token_type: "bearer", expires_in: 3600, expires_at: exp, refresh_token: refresh, user: publicUser(u) };
+    const life = Number(process.env.EMULATOR_TOKEN_SECONDS ?? 3600);
+    const exp = Math.floor(Date.now() / 1000) + life;
+    const access_token = signJwt({ sub: u.id, role: "authenticated", aud: "authenticated", email: u.email, session_id: randomUUID(), iat: exp - life, exp });
+    return { access_token, token_type: "bearer", expires_in: life, expires_at: exp, refresh_token: refresh, user: publicUser(u) };
   }
   const byEmail = async (e) => (await pool.query("select * from auth.users where email = $1", [String(e).toLowerCase()])).rows[0];
   const byId = async (i) => (await pool.query("select * from auth.users where id = $1", [i])).rows[0];
@@ -262,7 +264,11 @@ export async function startEmulator({ databaseUrl, port, stub }) {
         return u && matches(body.password, u.encrypted_password) ? send(200, session(u)) : fail(400, "invalid_credentials", "Invalid login credentials");
       }
       if (grant === "refresh_token") {
+        // Like Supabase: a used refresh token keeps working for 10 seconds, then is revoked.
+        const used = usedAt.get(body.refresh_token);
+        if (used && Date.now() - used > 10_000) return fail(400, "refresh_token_already_used", "Invalid Refresh Token: Already Used");
         const u = sessions.has(body.refresh_token) && (await byId(sessions.get(body.refresh_token)));
+        if (u && !used) usedAt.set(body.refresh_token, Date.now());
         return u ? send(200, session(u)) : fail(400, "refresh_token_not_found", "Invalid Refresh Token");
       }
       if (grant === "pkce") {

@@ -7,6 +7,7 @@ import { showCalendarLink, type LinkState } from "@/lib/actions/calendar";
 import { Submit } from "./forms/action-form";
 import { Icon, Labelled } from "./icon";
 import { useMenu } from "./use-menu";
+import { trouble } from "@/lib/trouble";
 
 const item = "flex min-h-11 w-full items-center px-4 py-2.5 hover:bg-leaf-wash/60";
 const OUT = { target: "_blank", rel: "noopener noreferrer" } as const;
@@ -31,7 +32,9 @@ export function AddToCalendar({ google, outlook, work }: { google: string; outlo
 
 /** For calendars with no button of their own. */
 export function PrivateLink({ on }: { on: boolean }) {
-  const [state, run] = useActionState<LinkState | null>(showCalendarLink, null);
+  const [state, run] = useActionState<LinkState | null>(async () => {
+    try { return await showCalendarLink(); } catch (error) { return trouble(error); }
+  }, null);
   const [copied, setCopied] = useState(false);
   const [was, setWas] = useState(on);
   const [dead, setDead] = useState<string>(); // turned off since it was shown

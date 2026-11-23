@@ -10,6 +10,7 @@ import { eventIcon } from "./event-icon";
 import { Icon, Labelled } from "./icon";
 import { Empty, PageHeader } from "./ui";
 import { useUnread } from "./unread";
+import { trouble } from "@/lib/trouble";
 
 /** Marks appear at once, and come back with a reason if saving them fails. */
 export function Notifications({ notices, unread: saved, before, older }: { notices: Notice[]; unread: number; before: string | null; older: string | null }) {
@@ -41,7 +42,7 @@ export function Notifications({ notices, unread: saved, before, older }: { notic
     button.closest("li")?.querySelector("a")?.focus(); // the button is about to go
     startTransition(async () => {
       mark([n.id]);
-      const result = await markNotificationRead(n.id).catch(() => null);
+      const result = await markNotificationRead(n.id).catch((error: unknown) => { trouble(error); return null; });
       startTransition(() => {
         say(result?.ok ? { ok: true, text: "Marked as read." } : { ok: false, text: result?.message ?? "That could not be saved. Please try again." });
       });
@@ -53,7 +54,7 @@ export function Notifications({ notices, unread: saved, before, older }: { notic
     startTransition(async () => {
       mark(notices.map((n) => n.id));
       clear(undefined);
-      const result = await markAllNotificationsRead(before).catch(() => null);
+      const result = await markAllNotificationsRead(before).catch((error: unknown) => { trouble(error); return null; });
       startTransition(() => {
         say(result?.ok ? { ok: true, text: "All marked as read." } : { ok: false, text: result?.message ?? "That could not be saved. Please try again." });
       });
