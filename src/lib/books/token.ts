@@ -14,7 +14,10 @@ const schema = z.object({
   description: str, cover_url: str, publisher: str, publication_date: str, publication_year: z.number().int().nullable(),
   language: str, isbn_10: str, isbn_13: str, format: z.string().nullable(), series_title: str, volume_number: str,
   page_count: z.number().int().nullable(), open_library_work_id: str, open_library_edition_id: str, google_books_id: str,
-  metadata_source: z.enum(["open_library", "google_books"]),
+  metadata_source: z.enum(["open_library", "google_books", "tmdb", "tvmaze", "anilist", "igdb", "rawg"]),
+  kind: z.enum(["book", "film", "series", "anime", "game"]).optional(),
+  external_id: str.optional(), episodes: z.number().int().nullable().optional(), runtime_minutes: z.number().int().nullable().optional(),
+  play_hours: z.number().int().nullable().optional(), platforms: z.array(z.string()).optional(),
 });
 
 const sign = (body: string) =>

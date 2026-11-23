@@ -1,9 +1,9 @@
-import { BookOpen, ExternalLink, Library, ShoppingBag, Sparkles, type LucideIcon } from "lucide-react";
+import { BookOpen, ExternalLink, Library, ShoppingBag, Sparkles, Tv, type LucideIcon } from "lucide-react";
 import { headers } from "next/headers";
 import { waysToGet, type Way } from "@/lib/books/where";
 import { Icon } from "./icon";
 
-const ICONS: Record<Way["kind"], LucideIcon> = { free: Sparkles, borrow: BookOpen, library: Library, buy: ShoppingBag };
+const ICONS: Record<Way["kind"], LucideIcon> = { free: Sparkles, borrow: BookOpen, stream: Tv, library: Library, buy: ShoppingBag };
 
 /** Where to read, borrow or buy a book. Looks are live, so this streams in after the page. */
 export async function GetThisBook({ book }: { book: Parameters<typeof waysToGet>[0] }) {

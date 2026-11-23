@@ -5,13 +5,17 @@ import { Field, RatingField, TextArea } from "@/components/forms/fields";
 import { addNote, addQuestion, deleteRecord, editNote, editQuestion, saveClubReview } from "@/lib/actions/meetings";
 import type { Discussion as Data } from "@/lib/data/club";
 import { formatDate } from "@/lib/dates";
+import { words, type Kind } from "@/lib/kinds";
 
-type Ctx = { clubId: string; cycleId?: string | null; meetingId?: string | null; userId: string; isAdmin: boolean; zone: string };
+type Ctx = { clubId: string; cycleId?: string | null; meetingId?: string | null; userId: string; isAdmin: boolean; zone: string; clubKind?: Kind };
 type Note = Data["notes"][number];
 
 const Remove = ({ table, id }: { table: string; id: string }) => (
   <ActionButton action={deleteRecord} hidden={{ table, id }} className="btn-text danger text-sm" pending="Removing…">Remove</ActionButton>
 );
+
+const isBook = (ctx: Ctx) => (ctx.clubKind ?? "book") === "book";
+const SOURCE_EXAMPLE: Record<Kind, string> = { book: "p. 112", film: "Near the end", series: "Episode 4", anime: "Episode 4", game: "Chapter 3" };
 
 export function Notes({ notes, ctx, kind }: { notes: Note[]; ctx: Ctx; kind: "note" | "quotation" }) {
   const quotes = kind === "quotation";
@@ -39,10 +43,10 @@ export function Notes({ notes, ctx, kind }: { notes: Note[]; ctx: Ctx; kind: "no
 export function AddNote({ ctx, kind }: { ctx: Ctx; kind: "note" | "quotation" }) {
   const quotes = kind === "quotation";
   return (
-    <FormDialog trigger={quotes ? "Add a quotation" : "Add a note"} triggerClass="btn-text" title={quotes ? "A passage worth keeping" : "A note for the club"} action={addNote}
+    <FormDialog trigger={quotes ? "Add a quotation" : "Add a note"} triggerClass="btn-text" title={quotes ? (isBook(ctx) ? "A passage worth keeping" : "A line worth keeping") : "A note for the club"} action={addNote}
       hidden={{ club_id: ctx.clubId, cycle_id: ctx.cycleId, meeting_id: ctx.meetingId, kind }} submit="Add">
       <TextArea label={quotes ? "Quotation" : "Note"} name="content" required rows={6} maxLength={10000} hint="Everyone in the club can read this." />
-      {quotes && <Field label="Where it is from (optional)" name="source" maxLength={200} placeholder="p. 112" />}
+      {quotes && <Field label="Where it is from (optional)" name="source" maxLength={200} placeholder={SOURCE_EXAMPLE[ctx.clubKind ?? "book"]} />}
     </FormDialog>
   );
 }
@@ -78,7 +82,7 @@ export function DiscussionSections({ data, ctx, canReview, writable }: { data: D
         )}
       </Section>
 
-      <Section title="Passages worth keeping" note="Lines from the book you want to remember." id="passages" aside={writable && <AddNote ctx={ctx} kind="quotation" />}>
+      <Section title={isBook(ctx) ? "Passages worth keeping" : "Lines worth keeping"} note={`Lines from the ${words(ctx.clubKind).one} you want to remember.`} id="passages" aside={writable && <AddNote ctx={ctx} kind="quotation" />}>
         {quotes.length ? <Notes notes={quotes} ctx={ctx} kind="quotation" /> : <p className="text-soft">No quotations yet.</p>}
       </Section>
 

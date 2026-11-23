@@ -1,4 +1,5 @@
 import type { PostgrestError } from "@supabase/supabase-js";
+import type { Kind } from "./kinds";
 import { plain } from "./plain";
 
 export type ActionState = { ok: boolean; message?: string; at?: number };
@@ -7,8 +8,8 @@ export const done = (message?: string): ActionState => ({ ok: true, message, at:
 export const failed = (message: string): ActionState => ({ ok: false, message, at: Date.now() });
 
 /** Database functions raise P0001 with wording meant for people; nothing else is shown. */
-export function explain(error: PostgrestError | { code?: string; message: string }, fallback = "Something went wrong. Please try again."): string {
-  if (error.code === "P0001") return plain(error.message);
+export function explain(error: PostgrestError | { code?: string; message: string }, fallback = "Something went wrong. Please try again.", kind?: Kind | null): string {
+  if (error.code === "P0001") return plain(error.message, kind);
   if (error.code === "23505") return "That has already been added.";
   if (error.code === "42501") return "You do not have permission to do that.";
   if (error.code === "23514" || error.code === "22P02") return "Some of those details are not valid. Please check and try again.";

@@ -1,18 +1,23 @@
 import { Field } from "@/components/forms/fields";
 import { utcToZonedInput, zoneLabel } from "@/lib/dates";
 import type { Cycle } from "@/lib/cycle";
+import { cap, words, type Kind } from "@/lib/kinds";
 
 type Dates = Pick<Cycle, "nomination_opens_at" | "nomination_closes_at" | "voting_opens_at" | "voting_closes_at" | "reading_starts_at" | "reading_ends_at">;
 export type DateKey = keyof Dates;
 
-const LABELS: Record<DateKey, string> = {
-  nomination_opens_at: "Nominations open", nomination_closes_at: "Nominations close",
-  voting_opens_at: "Voting opens", voting_closes_at: "Voting closes",
-  reading_starts_at: "Reading begins", reading_ends_at: "Reading ends",
+const labels = (kind?: Kind): Record<DateKey, string> => {
+  const doing = cap(words(kind).verbing);
+  return {
+    nomination_opens_at: "Nominations open", nomination_closes_at: "Nominations close",
+    voting_opens_at: "Voting opens", voting_closes_at: "Voting closes",
+    reading_starts_at: `${doing} begins`, reading_ends_at: `${doing} ends`,
+  };
 };
 
 /** Dates that have taken effect are sent along unchanged but cannot be edited. */
-export function ScheduleFields({ dates, zone, locked = [], only }: { dates: Dates; zone: string; locked?: DateKey[]; only?: DateKey[] }) {
+export function ScheduleFields({ dates, zone, locked = [], only, kind }: { dates: Dates; zone: string; locked?: DateKey[]; only?: DateKey[]; kind?: Kind }) {
+  const LABELS = labels(kind);
   return (
     <>
       <div className="grid gap-x-5 sm:grid-cols-2">

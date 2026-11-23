@@ -209,6 +209,7 @@ test("a tie goes to a runoff, then to a recorded decision", async ({ browser }) 
   await a.getByRole("radio", { name: "Kindred" }).check();
   await a.getByLabel("How it was decided").fill("We drew a title from a hat.");
   await a.getByRole("dialog").getByRole("button", { name: "Choose this book" }).click();
+  await expect(a.getByRole("dialog")).toHaveCount(0);
   await b.goto("/app/selection");
   await expect(b.getByText("We drew a title from a hat.")).toBeVisible();
   await b.goto("/app/current-book");

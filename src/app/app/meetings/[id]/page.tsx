@@ -45,7 +45,7 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
   const groups = [...ANSWERS.map(([key, label]) => [label, members.filter((m) => answer.get(m.user_id) === key)] as const), ["No answer yet", members.filter((m) => !answer.has(m.user_id))] as const];
   const mine = answer.get(userId);
   const canWrite = meeting.status !== "cancelled" && (isAdmin || meeting.discussion_leader_id === userId);
-  const ctx = { clubId: club.id, cycleId: meeting.cycle_id, meetingId: id, userId, isAdmin, zone: club.timezone };
+  const ctx = { clubId: club.id, cycleId: meeting.cycle_id, meetingId: id, userId, isAdmin, zone: club.timezone, clubKind: club.kind };
   const event = { title: meeting.title, club: club.name, starts_at: meeting.starts_at, location: meeting.location, url: `${siteUrl()}/app/meetings/${id}` };
   const ahead = meeting.status === "scheduled" && isAhead(meeting.starts_at);
   const bookHref = meeting.cycle?.status === "completed" ? `/app/archive/${meeting.cycle.id}` : "/app/current-book";

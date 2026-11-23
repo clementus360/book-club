@@ -1,13 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { searchProviders, type ProviderProgress } from "@/lib/books/search";
+import { providersFor, searchProviders, type ProviderProgress } from "@/lib/books/search";
+import { isKind } from "@/lib/kinds";
 import { createClient } from "@/lib/supabase/server";
 
-type Known = { google_books_id: string | null; open_library_edition_id: string | null; open_library_work_id: string | null; isbn_13: string | null; language: string | null; volume_number: string | null };
+type Known = { google_books_id: string | null; open_library_edition_id: string | null; open_library_work_id: string | null; isbn_13: string | null; language: string | null; volume_number: string | null; metadata_source: string; external_id: string | null };
 
 /** Do not offer again what is certainly the same record. */
 const unknown = (known: Known[]) => (p: ProviderProgress): ProviderProgress => ({
   ...p,
   results: p.results.filter(({ record: r }) => !known.some((b) =>
+    (r.external_id && r.external_id === b.external_id && r.metadata_source === b.metadata_source) ||
     (r.google_books_id && r.google_books_id === b.google_books_id) ||
     (r.open_library_edition_id && r.open_library_edition_id === b.open_library_edition_id) ||
     (r.isbn_13 && r.isbn_13 === b.isbn_13) ||
@@ -26,6 +28,8 @@ export async function GET(request: NextRequest) {
   if (!auth?.claims) return NextResponse.json({ error: "Sign in to search." }, { status: 401 });
 
   const q = (request.nextUrl.searchParams.get("q") ?? "").normalize("NFC").trim().slice(0, 200);
+  const asked = request.nextUrl.searchParams.get("kind");
+  const kind = isKind(asked) ? asked : "book";
   if ([...q].length < 2) return NextResponse.json({ local: [], results: [], unavailable: [] });
 
   // "local" looks only at books already in Commonplace: cheap, so it can follow typing closely.
@@ -33,8 +37,8 @@ export async function GET(request: NextRequest) {
   const pattern = `%${q.toLowerCase().replace(/[\\%_]/g, "\\$&").replace(/\s+/g, "%")}%`;
   const [local, quota] = await Promise.all([
     supabase.from("books")
-      .select("id, title, subtitle, authors, cover_url, publication_year, publisher, language, volume_number, edition_note, metadata_source, open_library_work_id, open_library_edition_id, google_books_id, isbn_13")
-      .like("search_text", pattern).order("title").limit(8),
+      .select("id, title, subtitle, authors, cover_url, publication_year, publisher, language, volume_number, edition_note, metadata_source, open_library_work_id, open_library_edition_id, google_books_id, isbn_13, kind, external_id")
+      .eq("kind", kind).like("search_text", pattern).order("title").limit(8),
     localOnly ? null : supabase.rpc("consume_search_quota"),
   ]);
   if (quota?.data === false) return NextResponse.json({ error: "That is a lot of searching. Please wait a few minutes." }, { status: 429 });
@@ -46,8 +50,8 @@ export async function GET(request: NextRequest) {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (line: object) => { try { controller.enqueue(encoder.encode(`${JSON.stringify(line)}\n`)); } catch { /* the reader has gone */ } };
-      send({ local: known, results: [], unavailable: [], waiting: ["Open Library", "Google Books"] });
-      const final = await searchProviders(q, { signal: request.signal, onUpdate: (p) => { if (p.waiting.length) send({ local: known, ...strip(p) }); } });
+      send({ local: known, results: [], unavailable: [], waiting: providersFor(kind).ready.map((p) => p.name) });
+      const final = await searchProviders(q, { kind, signal: request.signal, onUpdate: (p) => { if (p.waiting.length) send({ local: known, ...strip(p) }); } });
       send({ local: known, ...strip({ ...final, waiting: [] }), done: true });
       try { controller.close(); } catch { /* already closed */ }
     },

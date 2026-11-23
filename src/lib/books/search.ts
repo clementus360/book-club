@@ -2,6 +2,11 @@ import "server-only";
 import { searchGoogleBooks } from "./google-books";
 import { mergeResults, isSamePublication, fillGaps } from "./merge";
 import { searchOpenLibrary } from "./open-library";
+import type { Kind } from "@/lib/kinds";
+import { searchAnilist } from "@/lib/media/anilist";
+import { gameSource, gameSourceName, searchGames } from "@/lib/media/games";
+import { searchTmdb, tmdbReady } from "@/lib/media/tmdb";
+import { searchTvmaze } from "@/lib/media/tvmaze";
 import { signRecord } from "./token";
 import type { BookRecord, SearchResult } from "./types";
 
@@ -25,16 +30,31 @@ export function appendResults(shown: BookRecord[], later: BookRecord[], limit = 
   return out;
 }
 
+type Provider = { name: string; run: (query: string, signal?: AbortSignal) => Promise<BookRecord[]> };
+
 /**
- * Both catalogues at once. Whatever arrives first is passed to `onUpdate`
+ * Where each kind is looked up. A source that needs a key and has none is
+ * named in `missing`, so search can say it is unavailable rather than empty.
+ */
+export function providersFor(kind: Kind): { ready: Provider[]; missing: string[] } {
+  switch (kind) {
+    case "book": return { ready: [{ name: "Open Library", run: searchOpenLibrary }, { name: "Google Books", run: searchGoogleBooks }], missing: [] };
+    case "film": return tmdbReady() ? { ready: [{ name: "The Movie Database", run: searchTmdb }], missing: [] } : { ready: [], missing: ["The Movie Database"] };
+    case "series": return { ready: [{ name: "TVmaze", run: searchTvmaze }], missing: [] };
+    case "anime": return { ready: [{ name: "AniList", run: searchAnilist }], missing: [] };
+    case "game": return gameSource() ? { ready: [{ name: gameSourceName(), run: searchGames }], missing: [] } : { ready: [], missing: ["the games database"] };
+  }
+}
+
+/**
+ * Every source for the kind at once. Whatever arrives first is passed to `onUpdate`
  * straight away, so a slow catalogue never holds up a fast one.
  */
-export async function searchProviders(query: string, { signal, onUpdate, together = TOGETHER, onceOneAnswered = ONCE_ONE_ANSWERED }: { signal?: AbortSignal; onUpdate?: (p: ProviderProgress) => void; together?: number; onceOneAnswered?: number } = {}): Promise<ProviderSearch> {
+export async function searchProviders(query: string, { signal, onUpdate, together = TOGETHER, onceOneAnswered = ONCE_ONE_ANSWERED, kind = "book" }: { signal?: AbortSignal; onUpdate?: (p: ProviderProgress) => void; together?: number; onceOneAnswered?: number; kind?: Kind } = {}): Promise<ProviderSearch> {
   const started = Date.now();
-  const providers = [
-    { name: "Open Library", stop: new AbortController(), run: searchOpenLibrary },
-    { name: "Google Books", stop: new AbortController(), run: searchGoogleBooks },
-  ];
+  const { ready, missing } = providersFor(kind);
+  if (!ready.length) return { results: [], unavailable: missing };
+  const providers = ready.map((p) => ({ ...p, stop: new AbortController() }));
   const answers = new Map<string, BookRecord[] | null>(); // null: could not be reached
   let shown: BookRecord[] = [];
   let flushed = false;
@@ -48,7 +68,7 @@ export async function searchProviders(query: string, { signal, onUpdate, togethe
   });
   const flush = () => {
     clearTimeout(timer);
-    if (!flushed) { shown = mergeResults(ordered()[0]!, ordered()[1]!, LIMIT); flushed = true; }
+    if (!flushed) { shown = mergeResults(ordered()[0] ?? [], ordered()[1] ?? [], LIMIT); flushed = true; }
     onUpdate?.(progress());
   };
 

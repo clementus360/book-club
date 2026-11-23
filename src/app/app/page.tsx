@@ -12,6 +12,7 @@ import { getActiveCycle, getMeetings, getNominations } from "@/lib/data/club";
 import { getGuide } from "@/lib/data/guide";
 import { dayRange, fromNow } from "@/lib/dates";
 import { describeEvent } from "@/lib/events";
+import { words } from "@/lib/kinds";
 import { must, requireClub } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Home" };
@@ -22,11 +23,14 @@ export default async function Home() {
     getActiveCycle(), getMeetings(), getGuide(),
     supabase.from("club_recommendations").select("id, created_at, recommended_by, book:books!club_recommendations_book_id_fkey(id, title, authors, cover_url), recommender:profiles!club_recommendations_recommended_by_fkey(display_name)").eq("club_id", club.id).is("withdrawn_at", null).order("created_at", { ascending: false }).limit(4),
     supabase.from("activity_events").select("id, type, reference_id, created_at, actor:profiles!activity_events_actor_id_fkey(display_name), book:books!activity_events_book_id_fkey(title)").eq("club_id", club.id).order("created_at", { ascending: false }).limit(5),
-    supabase.from("user_books").select("status, book:books!user_books_book_id_fkey(id, title)").eq("user_id", userId).eq("status", "currently_reading").order("updated_at", { ascending: false }).limit(3),
+    supabase.from("user_books").select("status, book:books!user_books_book_id_fkey(id, title, kind)").eq("user_id", userId).eq("status", "currently_reading").order("updated_at", { ascending: false }).limit(20),
   ]);
   const nominations = cycle && cycle.status !== "reading" ? await getNominations(cycle.id) : [];
-  const deadline = cycle && nextDeadline(cycle);
+  const deadline = cycle && nextDeadline(cycle, club.kind);
   const next = meetings.find(isUpcoming);
+  const w = words(club.kind);
+  // What you are reading, watching or playing yourself, of this club's kind.
+  const mineNow = must(shelf).filter((s) => s.book.kind === club.kind).slice(0, 3);
 
   return (
     <>
@@ -36,25 +40,25 @@ export default async function Home() {
         <img src={club.image_url} alt="" referrerPolicy="no-referrer" className="block-gap max-h-48 max-w-full object-cover" />
       )}
       <NextStepBox step={guide.step} />
-      <Steps current={guide.current} />
+      <Steps current={guide.current} kind={club.kind} />
       <WithMargin margin={
         <>
           <Side title="Lately">
             <ul className="space-y-3">
               {must(activity).map((e) => {
-                const { text, href } = describeEvent({ ...e, actor: nameOf(e.actor), book: e.book?.title });
+                const { text, href } = describeEvent({ ...e, actor: nameOf(e.actor), book: e.book?.title, kind: club.kind });
                 return <li key={e.id} className="flex gap-2.5 leading-snug"><Icon of={eventIcon(e.type)} className="mt-0.5 text-soft" /><span><Link href={href} className="underline-offset-4 hover:underline">{text}</Link><span className="meta block">{fromNow(e.created_at)}</span></span></li>;
               })}
             </ul>
           </Side>
           <Side title="Just for you">
-            {must(shelf).length > 0 && <ul className="mb-3 space-y-1.5">{must(shelf).map((s) => <li key={s.book.id}><Link className="font-serif underline-offset-4 hover:underline" href={`/app/books/${s.book.id}`}>{s.book.title}</Link></li>)}</ul>}
-            <Link className="link" href="/app/my-library"><Labelled>Open My books</Labelled></Link>
+            {mineNow.length > 0 && <ul className="mb-3 space-y-1.5">{mineNow.map((s) => <li key={s.book.id}><Link className="font-serif underline-offset-4 hover:underline" href={`/app/books/${s.book.id}`}>{s.book.title}</Link></li>)}</ul>}
+            <Link className="link" href="/app/my-library"><Labelled>{`Open ${w.mine}`}</Labelled></Link>
           </Side>
         </>
       }>
         {cycle?.status === "reading" && cycle.book ? (
-          <Section title="Reading now" aside={<Link className="link" href="/app/current-book"><Labelled>Open</Labelled></Link>}>
+          <Section title={w.now} aside={<Link className="link" href="/app/current-book"><Labelled>Open</Labelled></Link>}>
             <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-5 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-6">
               <Link href="/app/current-book" tabIndex={-1} aria-hidden><BookCover book={cycle.book} className="w-full" priority /></Link>
               <div className="self-center">
@@ -76,7 +80,7 @@ export default async function Home() {
         </Section>
 
         <Section title="Recommended by members" aside={must(recs).length > 0 && <Link className="link" href="/app/recommendations"><Labelled>See all</Labelled></Link>}>
-          {must(recs).length === 0 ? <p className="text-soft">No one has recommended a book to this club yet.</p> : (
+          {must(recs).length === 0 ? <p className="text-soft">{`No one has recommended ${w.a} to this club yet.`}</p> : (
             <ul className="grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-4">
               {must(recs).map((r) => (
                 <li key={r.id}>

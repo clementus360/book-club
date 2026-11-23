@@ -8,6 +8,8 @@ import { cacheKey, LOCAL_DELAY, PROVIDER_DELAY, PROVIDER_GAP, tidy, worthSearchi
 import { languageName } from "@/lib/books/normalize";
 import { SOURCE_LABELS, type SearchResult } from "@/lib/books/types";
 import type { Tables } from "@/lib/database.types";
+import { lengthOf, words, type Kind } from "@/lib/kinds";
+import { authorsOf, platformList } from "./book-line";
 import { BookCover } from "./book-cover";
 import { Icon } from "./icon";
 import { trouble } from "@/lib/trouble";
@@ -21,7 +23,11 @@ type Step =
   | { at: "confirm"; book: Candidate };
 
 function Option({ book, source, onClick, disabled }: { book: Omit<Candidate, "id" | "metadata_source" | "edition_note"> & { edition_note?: string | null; original_title?: string | null }; source: string; onClick: () => void; disabled: boolean }) {
-  const facts = [book.volume_number && `Volume ${book.volume_number}`, book.publication_year, book.publisher, languageName(book.language), book.edition_note].filter(Boolean).join(" · ");
+  const kind = book.kind ?? "book";
+  const facts = kind === "book"
+    ? [book.volume_number && `Volume ${book.volume_number}`, book.publication_year, book.publisher, languageName(book.language), book.edition_note].filter(Boolean).join(" · ")
+    : [book.publication_year, lengthOf({ kind, page_count: null, episodes: book.episodes ?? null, runtime_minutes: book.runtime_minutes ?? null, play_hours: book.play_hours ?? null }),
+       kind === "game" ? platformList(book.platforms ?? []) : book.publisher].filter(Boolean).join(" · ");
   return (
     <li className="border-t border-rule">
       <button type="button" disabled={disabled} onClick={onClick} className="flex w-full gap-4 py-4 text-left hover:bg-leaf-wash/50 disabled:opacity-60">
@@ -30,13 +36,16 @@ function Option({ book, source, onClick, disabled }: { book: Omit<Candidate, "id
           <span className="block font-serif text-[1.0625rem] leading-snug">{book.title}</span>
           {book.subtitle && <span className="block text-sm text-soft">{book.subtitle}</span>}
           {book.original_title && <span className="block font-serif text-sm text-soft">{book.original_title}</span>}
-          <span className="block text-sm">{book.authors.join(", ") || "Author unknown"}</span>
+          {authorsOf({ ...book, kind }) && <span className="block text-sm">{authorsOf({ ...book, kind })}</span>}
           <span className="block text-sm text-soft">{[facts, source].filter(Boolean).join(" · ")}</span>
         </span>
       </button>
     </li>
   );
 }
+
+/** A source that needs a key nobody has set yet, as the search endpoint names it. */
+const providerMissing = (name: string) => name === "The Movie Database" || name === "the games database";
 
 /** Lines of JSON, as they arrive. */
 async function* lines<T>(res: Response, signal: AbortSignal): AsyncGenerator<T> {
@@ -57,9 +66,11 @@ async function* lines<T>(res: Response, signal: AbortSignal): AsyncGenerator<T> 
   }
 }
 
-/** Find a book (or enter one), settle any doubt about duplicates, then confirm. */
-export function BookPicker({ initialBook, prefill, suggestions = [], suggestionsTitle, confirm }: {
+/** Find a book, film or game (or enter one), settle any doubt about duplicates, then confirm. */
+export function BookPicker({ initialBook, prefill, suggestions = [], suggestionsTitle, confirm, kind = "book" }: {
   initialBook?: Candidate | null; prefill?: Partial<Tables<"books">> | null; suggestions?: Candidate[]; suggestionsTitle?: string;
+  /** What is being looked for. */
+  kind?: Kind;
   /** What to do with the book once it is chosen. */
   confirm: (bookId: string) => ReactNode;
 }) {
@@ -73,6 +84,8 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
   const request = useRef<AbortController | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const first = useRef(true);
+  const w = words(kind);
+  const keyOf = (text: string) => `${kind}:${cacheKey(text)}`;
 
   useEffect(() => {
     if (first.current) { first.current = false; return; }
@@ -85,7 +98,7 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
   useEffect(() => () => { stopWaiting(); request.current?.abort(); }, []);
 
   async function ask(text: string, scope: "local" | "all") {
-    const key = cacheKey(text);
+    const key = keyOf(text);
     const known = answers.get(key);
     if (known) { setFound(known); setSearching(false); return; }
     request.current?.abort();
@@ -93,7 +106,7 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
     if (scope === "all") { lastAsked.current = Date.now(); setSearching(true); }
     setProblem(null);
     try {
-      const res = await fetch(`/api/books/search?scope=${scope}&q=${encodeURIComponent(tidy(text))}`, { signal: controller.signal });
+      const res = await fetch(`/api/books/search?scope=${scope}&kind=${kind}&q=${encodeURIComponent(tidy(text))}`, { signal: controller.signal });
       if (!res.ok || !res.headers.get("content-type")?.includes("ndjson")) {
         const body = await res.json();
         if (!res.ok) throw new Error(body.error);
@@ -120,7 +133,7 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
       if (controller.signal.aborted) return;
       if (scope === "local") return; // the full search follows
       setFound(null);
-      setProblem(error instanceof Error && error.message ? error.message : "The search could not be completed. You can enter the book by hand.");
+      setProblem(error instanceof Error && error.message ? error.message : `The search could not be completed. You can enter the ${w.one} by hand.`);
     } finally {
       if (request.current === controller) setSearching(false);
     }
@@ -131,7 +144,7 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
     setQuery(text);
     if (cacheKey(text) === cacheKey(query)) return; // only the spacing changed
     stopWaiting();
-    const known = answers.get(cacheKey(text));
+    const known = answers.get(keyOf(text));
     if (known) { request.current?.abort(); setSearching(false); setProblem(null); setFound(known); return; }
     if ([...tidy(text)].length < 2) { request.current?.abort(); setSearching(false); setFound(null); setProblem(null); return; }
     timers.current.push(setTimeout(() => void ask(text, "local"), LOCAL_DELAY));
@@ -162,10 +175,10 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
     <div>
       {step.at === "search" && (
         <>
-          <h2 ref={heading} tabIndex={-1} className="sr-only">Find a book</h2>
+          <h2 ref={heading} tabIndex={-1} className="sr-only">{`Find ${w.a}`}</h2>
           <form role="search" className="form" onSubmit={(e) => { e.preventDefault(); stopWaiting(); if ([...tidy(query)].length > 1) void ask(query, "all"); }}>
             <div>
-              <label htmlFor="book-query" className="label">Title, author or ISBN, in any language</label>
+              <label htmlFor="book-query" className="label">{kind === "book" ? "Title, author or ISBN, in any language" : "Title, in any language"}</label>
               <div className="relative">
                 <input id="book-query" type="search" value={query} onChange={(e) => typed(e.target.value)} className="input pl-9" autoComplete="off" enterKeyHint="search" maxLength={200} aria-describedby="book-query-hint" />
                 <Icon of={Search} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-soft" />
@@ -176,8 +189,8 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
           <div aria-live="polite" className="mt-4">
             {searching && <p className="meta">{found?.results.length && waiting.length === 1 ? `Still looking in ${waiting[0]}…` : "Searching…"}</p>}
             {problem && <p className="notice error">{problem}</p>}
-            {found && found.unavailable.length > 0 && !searching && <p className="meta">{found.unavailable.join(" and ")} could not be reached just now, so some books may be missing. Press Enter to try again.</p>}
-            {nothing && !searching && <p className="py-4 font-serif text-lg">Nothing found for that. Try another spelling, or enter the book by hand.</p>}
+            {found && found.unavailable.length > 0 && !searching && <p className="meta">{found.unavailable.join(" and ")}{found.results.length || !found.unavailable.some(providerMissing) ? ` could not be reached just now, so some ${w.many} may be missing. Press Enter to try again.` : ` is not set up yet, so only ${w.many} already in Commonplace can be found. You can enter one by hand.`}</p>}
+            {nothing && !searching && <p className="py-4 font-serif text-lg">{`Nothing found for that. Try another spelling, or enter the ${w.one} by hand.`}</p>}
           </div>
           {found && (
             <>
@@ -187,7 +200,7 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
                 </section>
               )}
               {found.results.length > 0 && (
-                <section className="mt-8"><h3 className="rubric mb-2">From book catalogues</h3>
+                <section className="mt-8"><h3 className="rubric mb-2">{kind === "book" ? "From book catalogues" : `From ${SOURCE_LABELS[found.results[0]!.record.metadata_source]}`}</h3>
                   <ul>{found.results.map(({ record, token }) => <Option key={token.slice(-43)} book={record} source={SOURCE_LABELS[record.metadata_source]} disabled={busy} onClick={() => settle((s) => resolveSearchResult(token, s))} />)}</ul>
                 </section>
               )}
@@ -198,15 +211,15 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
               <ul>{suggestions.map((b) => <Option key={b.id} book={b} source="" disabled={busy} onClick={() => setStep({ at: "confirm", book: b })} />)}</ul>
             </section>
           )}
-          <p className="mt-8">Can’t find it? <button type="button" className="link" onClick={() => { setProblem(null); setStep({ at: "manual" }); }}>Enter the book by hand</button></p>
+          <p className="mt-8">Can’t find it? <button type="button" className="link" onClick={() => { setProblem(null); setStep({ at: "manual" }); }}>{`Enter the ${w.one} by hand`}</button></p>
         </>
       )}
 
       {step.at === "manual" && (
         <>
-          <h2 ref={heading} tabIndex={-1} className="mb-5 text-xl outline-none">Enter a book by hand</h2>
+          <h2 ref={heading} tabIndex={-1} className="mb-5 text-xl outline-none">{`Enter ${w.a} by hand`}</h2>
           <form className="form" onSubmit={(e) => { e.preventDefault(); const form = new FormData(e.currentTarget); settle((s) => resolveManual(form, s)); }}>
-            <ManualFields book={prefill ?? undefined} />
+            <ManualFields book={prefill ?? undefined} kind={kind} />
             {problem && <p role="alert" className="notice error mb-4">{problem}</p>}
             <div className="flex flex-wrap gap-3">
               <button className="btn btn-primary" disabled={busy}>{busy ? "Checking…" : "Continue"}</button>
@@ -219,11 +232,11 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
       {step.at === "choose" && (
         <>
           <h2 ref={heading} tabIndex={-1} className="text-xl outline-none">Is it one of these?</h2>
-          <p className="mt-2 mb-4 text-soft">Commonplace already has something that looks similar. If it is the same edition or volume, choose it.</p>
+          <p className="mt-2 mb-4 text-soft">{kind === "book" ? "Commonplace already has something that looks similar. If it is the same edition or volume, choose it." : `Commonplace already has something that looks similar. If it is the same ${w.one}, choose it.`}</p>
           <ul className="border-b border-rule">{step.candidates.map((b) => <Option key={b.id} book={b} source="" disabled={busy} onClick={() => setStep({ at: "confirm", book: b })} />)}</ul>
           {problem && <p role="alert" className="notice error mt-4">{problem}</p>}
           <div className="mt-6 flex flex-wrap gap-3">
-            <button type="button" className="btn btn-plain" disabled={busy} onClick={() => settle(step.again)}>{busy ? "Adding…" : "No, mine is a different edition"}</button>
+            <button type="button" className="btn btn-plain" disabled={busy} onClick={() => settle(step.again)}>{busy ? "Adding…" : kind === "book" ? "No, mine is a different edition" : "No, mine is a different one"}</button>
             <button type="button" className="btn btn-plain" onClick={() => setStep({ at: "search" })}>Back</button>
           </div>
         </>
@@ -235,9 +248,9 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
             <BookCover book={step.book} className="w-24" priority />
             <div className="min-w-0">
               <h2 ref={heading} tabIndex={-1} className="text-2xl leading-snug outline-none">{step.book.title}</h2>
-              <p className="text-soft">{step.book.authors.join(", ") || "Author unknown"}</p>
+              {authorsOf({ ...step.book, kind }) && <p className="text-soft">{authorsOf({ ...step.book, kind })}</p>}
               {step.book.volume_number && <p className="meta">Volume {step.book.volume_number}</p>}
-              <button type="button" className="btn-text mt-1" onClick={() => { setProblem(null); setStep({ at: "search" }); }}>Choose a different book</button>
+              <button type="button" className="btn-text mt-1" onClick={() => { setProblem(null); setStep({ at: "search" }); }}>{`Choose a different ${w.one}`}</button>
             </div>
           </div>
           <div className="form">{confirm(step.book.id)}</div>

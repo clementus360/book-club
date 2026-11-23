@@ -107,6 +107,12 @@ export type Database = {
           search_text: string;
           created_at: string;
           updated_at: string;
+          kind: Database["public"]["Enums"]["club_kind"];
+          external_id: string | null;
+          episodes: number | null;
+          runtime_minutes: number | null;
+          play_hours: number | null;
+          platforms: string[];
         };
         Insert: {
           id?: string;
@@ -136,6 +142,12 @@ export type Database = {
           search_text?: string;
           created_at?: string;
           updated_at?: string;
+          kind?: Database["public"]["Enums"]["club_kind"];
+          external_id?: string | null;
+          episodes?: number | null;
+          runtime_minutes?: number | null;
+          play_hours?: number | null;
+          platforms?: string[];
         };
         Update: {
           id?: string;
@@ -165,6 +177,12 @@ export type Database = {
           search_text?: string;
           created_at?: string;
           updated_at?: string;
+          kind?: Database["public"]["Enums"]["club_kind"];
+          external_id?: string | null;
+          episodes?: number | null;
+          runtime_minutes?: number | null;
+          play_hours?: number | null;
+          platforms?: string[];
         };
         Relationships: [
         ];
@@ -311,6 +329,7 @@ export type Database = {
           created_by: string | null;
           created_at: string;
           updated_at: string;
+          kind: Database["public"]["Enums"]["club_kind"];
         };
         Insert: {
           id?: string;
@@ -325,6 +344,7 @@ export type Database = {
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          kind?: Database["public"]["Enums"]["club_kind"];
         };
         Update: {
           id?: string;
@@ -339,6 +359,7 @@ export type Database = {
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          kind?: Database["public"]["Enums"]["club_kind"];
         };
         Relationships: [
           { foreignKeyName: "clubs_created_by_fkey"; columns: ["created_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
@@ -758,6 +779,7 @@ export type Database = {
           created_at: string;
           updated_at: string;
           email_updates: boolean;
+          platforms: string[];
         };
         Insert: {
           id: string;
@@ -766,6 +788,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           email_updates?: boolean;
+          platforms?: string[];
         };
         Update: {
           id?: string;
@@ -774,6 +797,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           email_updates?: boolean;
+          platforms?: string[];
         };
         Relationships: [
         ];
@@ -799,6 +823,7 @@ export type Database = {
           completed_at: string | null;
           created_by: string | null;
           created_at: string;
+          goal: string | null;
         };
         Insert: {
           id?: string;
@@ -820,6 +845,7 @@ export type Database = {
           completed_at?: string | null;
           created_by?: string | null;
           created_at?: string;
+          goal?: string | null;
         };
         Update: {
           id?: string;
@@ -841,6 +867,7 @@ export type Database = {
           completed_at?: string | null;
           created_by?: string | null;
           created_at?: string;
+          goal?: string | null;
         };
         Relationships: [
           { foreignKeyName: "reading_cycles_book_id_fkey"; columns: ["book_id"]; isOneToOne: false; referencedRelation: "books"; referencedColumns: ["id"] },
@@ -858,6 +885,8 @@ export type Database = {
           current_page: number | null;
           percentage: number | null;
           updated_at: string;
+          episode: number | null;
+          hours: number | null;
         };
         Insert: {
           id?: string;
@@ -867,6 +896,8 @@ export type Database = {
           current_page?: number | null;
           percentage?: number | null;
           updated_at?: string;
+          episode?: number | null;
+          hours?: number | null;
         };
         Update: {
           id?: string;
@@ -876,6 +907,8 @@ export type Database = {
           current_page?: number | null;
           percentage?: number | null;
           updated_at?: string;
+          episode?: number | null;
+          hours?: number | null;
         };
         Relationships: [
           { foreignKeyName: "reading_progress_cycle_id_fkey"; columns: ["cycle_id"]; isOneToOne: false; referencedRelation: "reading_cycles"; referencedColumns: ["id"] },
@@ -1060,7 +1093,7 @@ export type Database = {
       complete_cycle: { Args: { p_cycle_id: string }; Returns: undefined };
       confirm_sole_nomination: { Args: { p_cycle_id: string }; Returns: undefined };
       consume_search_quota: { Args: Record<PropertyKey, never>; Returns: boolean };
-      create_club: { Args: { p_name: string | null; p_description?: string | null; p_timezone?: string | null }; Returns: string };
+      create_club: { Args: { p_name: string | null; p_description?: string | null; p_timezone?: string | null; p_kind?: Database["public"]["Enums"]["club_kind"] }; Returns: string };
       create_cycle: { Args: { p_club_id: string; p_nomination_opens_at: string | null; p_nomination_closes_at: string | null; p_voting_opens_at: string | null; p_voting_closes_at: string | null; p_reading_starts_at: string | null; p_reading_ends_at: string | null }; Returns: string };
       create_invitation: { Args: { p_club_id: string }; Returns: { id: string; token: string; expires_at: string }[] };
       create_manual_book: { Args: { p_book: Json }; Returns: string };
@@ -1083,6 +1116,7 @@ export type Database = {
       reopen_voting: { Args: { p_cycle_id: string; p_closes_at: string | null }; Returns: undefined };
       revoke_invitation: { Args: { p_invitation_id: string }; Returns: undefined };
       save_club_review: { Args: { p_cycle_id: string; p_rating: number | null; p_text: string | null }; Returns: undefined };
+      set_cycle_goal: { Args: { p_cycle_id: string; p_goal: string | null }; Returns: undefined };
       set_email_updates: { Args: { p_user: string; p_on: boolean }; Returns: undefined };
       set_member_role: { Args: { p_club_id: string; p_user_id: string; p_role: Database["public"]["Enums"]["club_role"] }; Returns: undefined };
       stop_meeting_poll: { Args: { p_poll_id: string }; Returns: undefined };
@@ -1097,8 +1131,9 @@ export type Database = {
     Enums: {
       attendance_status: "going" | "maybe" | "not_going";
       book_format: "novel" | "nonfiction" | "short_stories" | "poetry" | "drama" | "manga" | "manhua" | "manhwa" | "light_novel" | "graphic_novel" | "comic" | "other";
-      book_source: "open_library" | "google_books" | "manual";
+      book_source: "open_library" | "google_books" | "manual" | "tmdb" | "tvmaze" | "anilist" | "igdb" | "rawg";
       club_book_source: "added" | "recommended" | "nominated";
+      club_kind: "book" | "film" | "series" | "anime" | "game";
       club_role: "admin" | "member";
       cycle_status: "scheduled" | "nominating" | "nominations_closed" | "voting" | "runoff" | "awaiting_decision" | "reading" | "completed" | "cancelled";
       decision_method: "vote" | "runoff" | "admin_decision" | "sole_nomination";

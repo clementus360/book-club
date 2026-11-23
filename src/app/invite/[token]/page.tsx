@@ -5,11 +5,20 @@ import { Shell } from "@/components/shell";
 import { acceptInvitation } from "@/lib/actions/clubs";
 import { formatDate } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
+import { isKind, type Kind } from "@/lib/kinds";
 
 export const metadata: Metadata = { title: "Invitation", robots: { index: false, follow: false }, referrer: "no-referrer" };
 
+const INVITE_LEDE: Record<Kind, string> = {
+  book: "A private book club on Commonplace, where you choose books together, read them, and talk about them in person.",
+  film: "A private film club on Commonplace, where you choose films together, watch them, and talk about them in person.",
+  series: "A private TV club on Commonplace, where you choose series together, watch them, and talk about them in person.",
+  anime: "A private anime club on Commonplace, where you choose anime together, watch them, and talk about them in person.",
+  game: "A private game club on Commonplace, where you choose games together, play them, and talk about them in person.",
+};
+
 type Preview =
-  | { status: "pending"; club_name: string; invited_by: string | null; expires_at: string }
+  | { status: "pending"; club_name: string; club_kind?: string; invited_by: string | null; expires_at: string }
   | { status: "already_member"; club_id: string; club_name: string }
   | { status: "used" | "revoked" | "expired" | "invalid" };
 
@@ -34,7 +43,7 @@ export default async function Invite({ params }: { params: Promise<{ token: stri
   if (preview.status === "pending") {
     return (
       <Shell kicker={`An invitation${preview.invited_by ? ` from ${preview.invited_by}` : ""}`} title={`Join ${preview.club_name}`}
-        lede="A private book club on Commonplace, where you choose books together, read them, and talk about them in person.">
+        lede={INVITE_LEDE[isKind(preview.club_kind) ? preview.club_kind : "book"]}>
         {auth?.claims ? (
           <ActionForm action={acceptInvitation} hidden={{ token }}>
             <Submit pending="Joining…">Join the club</Submit>

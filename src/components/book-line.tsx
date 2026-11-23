@@ -3,19 +3,32 @@ import type { ReactNode } from "react";
 import { FORMAT_LABELS } from "@/lib/books/types";
 import { languageName } from "@/lib/books/normalize";
 import type { Tables } from "@/lib/database.types";
+import { isPlatform, lengthOf, PLATFORM_LABEL, type Kind } from "@/lib/kinds";
 import { BookCover } from "./book-cover";
 
 type Book = Tables<"books">;
 
-export const authorsOf = (b: { authors: string[] }) => b.authors.join(", ") || "Author unknown";
+/** Who made it. Only a book without an author says so; for the rest, nothing is shown. */
+export const authorsOf = (b: { authors: string[]; kind?: Kind }) => b.authors.join(", ") || (!b.kind || b.kind === "book" ? "Author unknown" : "");
 
 export function volumeLabel(b: Pick<Book, "volume_number" | "title">): string | null {
   return b.volume_number && !/\b(vol|volume)\b/i.test(b.title) ? `Volume ${b.volume_number}` : null;
 }
 
-export function bookFacts(b: Pick<Book, "publication_year" | "format" | "language" | "volume_number" | "title" | "edition_note">): string {
-  return [volumeLabel(b), b.publication_year, b.format && FORMAT_LABELS[b.format], b.language && b.language !== "en" ? languageName(b.language) : null, b.edition_note].filter(Boolean).join(" · ");
+type Factual = Pick<Book, "publication_year" | "format" | "language" | "volume_number" | "title" | "edition_note"> &
+  Partial<Pick<Book, "kind" | "page_count" | "episodes" | "runtime_minutes" | "play_hours" | "platforms">>;
+
+/** A line of facts. Books are as they always were; the rest add their length, and games their platforms. */
+export function bookFacts(b: Factual): string {
+  if (!b.kind || b.kind === "book") {
+    return [volumeLabel(b), b.publication_year, b.format && FORMAT_LABELS[b.format], b.language && b.language !== "en" ? languageName(b.language) : null, b.edition_note].filter(Boolean).join(" · ");
+  }
+  const length = lengthOf({ kind: b.kind, page_count: b.page_count ?? null, episodes: b.episodes ?? null, runtime_minutes: b.runtime_minutes ?? null, play_hours: b.play_hours ?? null });
+  const platforms = b.kind === "game" ? platformList(b.platforms ?? []) : null;
+  return [b.publication_year, length, platforms, b.language && b.language !== "en" && b.kind !== "anime" ? languageName(b.language) : null].filter(Boolean).join(" · ");
 }
+
+export const platformList = (p: string[]) => p.filter(isPlatform).map((x) => PLATFORM_LABEL[x]).join(", ") || null;
 
 /** A book as it appears in any list. */
 export function BookLine({ book, href = `/app/books/${book.id}`, children, aside }: { book: Book; href?: string; children?: ReactNode; aside?: ReactNode }) {

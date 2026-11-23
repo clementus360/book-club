@@ -13,8 +13,8 @@ export default function Terms() {
       <p>Clubs are private and run by their members. Administrators may invite and remove people and manage the club’s settings, books and meetings. Please only invite people who would like to be invited.</p>
       <h2>What you write</h2>
       <p>What you write is yours. You allow Commonplace to store it and to show it to the people described on the privacy page. Keep quotations to what fair use allows, and do not post anything unlawful, harassing or that is not yours to share.</p>
-      <h2>Book information</h2>
-      <p>Book details and covers come from Open Library, Google Books and fellow readers, and may be incomplete or wrong.</p>
+      <h2>Book, film and game information</h2>
+      <p>Book details and covers come from Open Library, Google Books and fellow readers. Films come from The Movie Database (TMDB), series from TVmaze, anime from AniList and games from IGDB or RAWG, as well as from members. Any of it may be incomplete or wrong. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
       <h2>Fair use of the service</h2>
       <p>Do not try to reach other people’s private information, disrupt the service, or collect data from it automatically.</p>
       <h2>No guarantees</h2>

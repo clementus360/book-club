@@ -7,6 +7,7 @@ import { done, explain, failed, isUuid, text, type ActionState } from "@/lib/act
 import { isTimeZone } from "@/lib/dates";
 import { siteUrl } from "@/lib/env";
 import { CLUB_COOKIE, getViewer, requireUser } from "@/lib/viewer";
+import { isKind, isPlatform, type Kind } from "@/lib/kinds";
 
 const refreshApp = () => revalidatePath("/app", "layout");
 
@@ -19,6 +20,7 @@ export async function createClub(_: ActionState | null, form: FormData): Promise
   const zone = form.get("timezone");
   const { data, error } = await supabase.rpc("create_club", {
     p_name: text(form, "name") ?? "", p_description: text(form, "description"), p_timezone: isTimeZone(zone) ? zone : "UTC",
+    p_kind: isKind(form.get("kind")) ? (form.get("kind") as Kind) : "book",
   });
   if (error) return failed(explain(error));
   await selectClub(data);
@@ -121,7 +123,11 @@ const days = (form: FormData, name: string) => {
 export async function updateClub(_: ActionState | null, form: FormData): Promise<ActionState> {
   const { supabase } = await requireUser();
   let changes;
-  if (form.get("part") === "lengths") {
+  if (form.get("part") === "kind") {
+    const kind = form.get("kind");
+    if (!isKind(kind)) return failed("Choose what the club shares.");
+    changes = { kind };
+  } else if (form.get("part") === "lengths") {
     changes = {
       default_nomination_days: days(form, "default_nomination_days"), default_voting_days: days(form, "default_voting_days"),
       default_reading_days: days(form, "default_reading_days"), default_runoff_days: days(form, "default_runoff_days"),
@@ -161,4 +167,14 @@ export async function updateEmailUpdates(_: ActionState | null, form: FormData):
   if (error) return failed(explain(error));
   refreshApp();
   return done(on ? "You will be emailed at important moments." : "Emails are off.");
+}
+
+/** The platforms you own, so game clubs can see who could play what. */
+export async function updatePlatforms(_: ActionState | null, form: FormData): Promise<ActionState> {
+  const { supabase, userId } = await requireUser();
+  const platforms = [...new Set(form.getAll("platforms").filter(isPlatform))];
+  const { error } = await supabase.from("profiles").update({ platforms }).eq("id", userId);
+  if (error) return failed(explain(error));
+  refreshApp();
+  return done("Platforms saved.");
 }

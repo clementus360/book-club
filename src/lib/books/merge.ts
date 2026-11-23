@@ -7,6 +7,7 @@ const same = (a: string | null, b: string | null) => a !== null && a === b;
 export function isSamePublication(a: BookRecord, b: BookRecord): boolean {
   if (a.volume_number && b.volume_number && fold(a.volume_number) !== fold(b.volume_number)) return false;
   return (
+    (same(a.external_id ?? null, b.external_id ?? null) && a.metadata_source === b.metadata_source) ||
     same(a.google_books_id, b.google_books_id) ||
     same(a.open_library_edition_id, b.open_library_edition_id) ||
     same(a.isbn_13, b.isbn_13) ||

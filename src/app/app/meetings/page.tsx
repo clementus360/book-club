@@ -7,6 +7,7 @@ import { Empty, PageHeader, Section } from "@/components/ui";
 import { getMeetings } from "@/lib/data/club";
 import { getOpenPolls } from "@/lib/data/polls";
 import { requireClub } from "@/lib/viewer";
+import { words } from "@/lib/kinds";
 
 export const metadata: Metadata = { title: "Meetings" };
 
@@ -18,7 +19,7 @@ export default async function Meetings() {
   const arrange = isAdmin && <><Link className="btn btn-primary" href="/app/meetings/new"><Labelled>Arrange a meeting</Labelled></Link><Link className="btn btn-plain" href="/app/meetings/find"><Labelled>Find a date</Labelled></Link></>;
   return (
     <>
-      <PageHeader kicker={club.name} title="Meetings" action={(meetings.length > 0 || polls.length > 0) && arrange}>When and where you meet to talk about the book. Open one to say whether you are coming.</PageHeader>
+      <PageHeader kicker={club.name} title="Meetings" action={(meetings.length > 0 || polls.length > 0) && arrange}>{`When and where you meet to talk about the ${words(club.kind).one}. Open one to say whether you are coming.`}</PageHeader>
       {polls.length > 0 && (
         <Section title="Finding a date">
           {polls.map((p) => (

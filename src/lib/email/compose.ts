@@ -1,9 +1,10 @@
 import { formatDateTime, zoneLabel } from "@/lib/dates";
+import { isKind, words } from "@/lib/kinds";
 
 /** What claim_emails() hands out for each email. */
 export type EmailItem = {
   id: string; type: string; user_id: string; email: string; name: string;
-  club_id: string; club: string; timezone: string; actor: string | null; reference_id: string | null;
+  club_id: string; club: string; kind?: string; timezone: string; actor: string | null; reference_id: string | null;
   cycle: { status: string; nomination_closes_at: string; voting_closes_at: string; runoff_closes_at: string | null; book: string | null; authors: string[] | null } | null;
   meeting: { title: string; starts_at: string; timezone: string; location: string | null } | null;
   poll: { title: string } | null;
@@ -21,22 +22,24 @@ export function compose(item: EmailItem, site: string, stopUrl: string): Email |
   const someone = item.actor ?? "An administrator";
   const when = (iso: string | null | undefined, zone = item.timezone) => (iso ? `${formatDateTime(iso, zone)} (${zoneLabel(zone, iso)})` : null);
   const c = item.cycle, m = item.meeting;
-  const book = c?.book ? `${c.book}${c.authors?.length ? ` by ${c.authors.join(", ")}` : ""}` : null;
+  const w = words(isKind(item.kind) ? item.kind : "book");
+  const { one, many, a, verb } = w;
+  const book = c?.book ? `${c.book}${c.authors?.length && w.kind !== "anime" ? ` by ${c.authors.join(", ")}` : ""}` : null;
   // A deadline line, or none if the date is missing.
   const by = (label: string, iso: string | null | undefined) => (iso ? [`${label} ${when(iso)}.`] : []);
   const meetingLines = m ? [`When: ${when(m.starts_at, m.timezone)}`, `Where: ${m.location ? oneLine(m.location) : "to be decided"}`] : [];
 
   const parts: Record<string, [string, string[], string, string]> = {
     // subject, lines, button, where it leads
-    nominations_opened: ["Nominations are open", ["Time to choose the next book. Put forward one you would like the club to read.", ...by("Nominations close", c?.nomination_closes_at)], "Nominate a book", "/app/add-book?to=nominate"],
-    nominations_reopened: ["More time to nominate", [`${someone} gave everyone more time to put forward a book.`, ...by("Nominations now close", c?.nomination_closes_at)], "Nominate a book", "/app/add-book?to=nominate"],
-    nominations_closed: ["Nominations have closed", ["There are not enough books to vote on yet, so an administrator will decide what happens next."], "See the nominations", "/app/selection"],
-    voting_opened: ["Voting is open", ["Put the nominated books in the order you would like to read them. Nobody can see how you voted.", ...by("Voting closes", c?.voting_closes_at)], "Vote now", "/app/selection#vote"],
+    nominations_opened: ["Nominations are open", [`Time to choose the next ${one}. Put forward one you would like the club to ${verb}.`, ...by("Nominations close", c?.nomination_closes_at)], `Nominate ${a}`, "/app/add-book?to=nominate"],
+    nominations_reopened: ["More time to nominate", [`${someone} gave everyone more time to put forward ${a}.`, ...by("Nominations now close", c?.nomination_closes_at)], `Nominate ${a}`, "/app/add-book?to=nominate"],
+    nominations_closed: ["Nominations have closed", [`There are not enough ${many} to vote on yet, so an administrator will decide what happens next.`], "See the nominations", "/app/selection"],
+    voting_opened: ["Voting is open", [`Put the nominated ${many} in the order you would like to ${verb} them. Nobody can see how you voted.`, ...by("Voting closes", c?.voting_closes_at)], "Vote now", "/app/selection#vote"],
     voting_reopened: ["Voting is open again", [`${someone} opened voting again.`, ...by("Voting closes", c?.voting_closes_at)], "Vote now", "/app/selection#vote"],
-    runoff_opened: ["Voting is over: it was a tie", ["The top books came level, so there is a second vote between them.", ...by("It closes", c?.runoff_closes_at)], "Vote again", "/app/selection#vote"],
-    decision_needed: ["Voting is over: no clear winner", ["The vote did not settle it, so an administrator will agree the book with the club."], "See the result", "/app/selection"],
-    book_selected: [c?.book ? `Voting is over: ${oneLine(c.book)}` : "Voting is over", [book ? `The club is reading ${book}.` : "The club has chosen its next book."], "See the book", "/app/current-book"],
-    cycle_cancelled: ["Choosing a book was stopped", [`${someone} stopped this round of choosing a book. Nothing is needed from you.`], "Open the club", "/app"],
+    runoff_opened: ["Voting is over: it was a tie", [`The top ${many} came level, so there is a second vote between them.`, ...by("It closes", c?.runoff_closes_at)], "Vote again", "/app/selection#vote"],
+    decision_needed: ["Voting is over: no clear winner", [`The vote did not settle it, so an administrator will agree the ${one} with the club.`], "See the result", "/app/selection"],
+    book_selected: [c?.book ? `Voting is over: ${oneLine(c.book)}` : "Voting is over", [book ? `The club is ${w.verbing} ${book}.` : `The club has chosen its next ${one}.`], `See the ${one}`, "/app/current-book"],
+    cycle_cancelled: [`Choosing ${a} was stopped`, [`${someone} stopped this round of choosing ${a}. Nothing is needed from you.`], "Open the club", "/app"],
     meeting_created: [`Meeting: ${oneLine(m?.title ?? "")}`, [`${someone} arranged a meeting.`, ...meetingLines], "Say if you are coming", `/app/meetings/${item.reference_id}`],
     meeting_updated: [`Meeting changed: ${oneLine(m?.title ?? "")}`, [`${someone} changed the time or place.`, ...meetingLines], "See the meeting", `/app/meetings/${item.reference_id}`],
     meeting_cancelled: [`Meeting cancelled: ${oneLine(m?.title ?? "")}`, [`${someone} cancelled this meeting.`, ...meetingLines.slice(0, 1)], "See the meeting", `/app/meetings/${item.reference_id}`],

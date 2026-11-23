@@ -8,6 +8,7 @@ import { EditRecommendation } from "@/components/recommend-form";
 import { LiveSelect } from "@/components/live-filter";
 import { Empty, nameOf, PageHeader, Rating, Toolbar } from "@/components/ui";
 import { withdrawRecommendation } from "@/lib/actions/books";
+import { words } from "@/lib/kinds";
 import { formatDate } from "@/lib/dates";
 import { getViewer, must } from "@/lib/viewer";
 
@@ -16,8 +17,9 @@ export const metadata: Metadata = { title: "Recommendations" };
 export default async function Recommendations({ searchParams }: { searchParams: Promise<{ view?: string; club?: string }> }) {
   const { view, club: wanted } = await searchParams;
   const made = view === "made";
-  const { supabase, userId, clubs } = await getViewer();
+  const { supabase, userId, clubs, club } = await getViewer();
   const filterClub = clubs.find((c) => c.id === wanted) ?? null;
+  const w = words(filterClub?.kind ?? club?.kind);
   const [recs, reviews, shelf] = await Promise.all([
     supabase.from("club_recommendations")
       .select("*, book:books!club_recommendations_book_id_fkey(*), recommender:profiles!club_recommendations_recommended_by_fkey(display_name), club:clubs!club_recommendations_club_id_fkey(name, timezone)")
@@ -34,23 +36,23 @@ export default async function Recommendations({ searchParams }: { searchParams: 
 
   return (
     <>
-      <PageHeader kicker="Across your clubs" title="Recommendations">Friendly suggestions between members. They are separate from the vote: to get a book into the vote, nominate it.</PageHeader>
+      <PageHeader kicker="Across your clubs" title="Recommendations">{`Friendly suggestions between members. They are separate from the vote: to get ${w.a} into the vote, nominate it.`}</PageHeader>
       <Toolbar label="Recommendations" tabs={([["", "For you"], ["made", "Made by you"]] as const).map(([v, label]) => ({ label, current: made === (v === "made"), href: `/app/recommendations${v || filterClub ? `?${new URLSearchParams({ ...(v && { view: v }), ...(filterClub && { club: filterClub.id }) })}` : ""}` }))}>
         {clubs.length > 1 && <LiveSelect name="club" label="Which club" options={[["", "All clubs"], ...clubs.map((c) => [c.id, c.name] as const)]} />}
       </Toolbar>
       <div>
       {list.length === 0 ? (
         made ? (
-          <Empty icon={ThumbsUp} title="You have not recommended anything yet" action={<Link className="btn btn-primary" href="/app/my-library"><Labelled>Open My books</Labelled></Link>}>Open a book in My books and choose Recommend to club.</Empty>
+          <Empty icon={ThumbsUp} title="You have not recommended anything yet" action={<Link className="btn btn-primary" href="/app/my-library"><Labelled>{`Open ${w.mine}`}</Labelled></Link>}>{`Open ${w.a} in ${w.mine} and choose Recommend to club.`}</Empty>
         ) : (
-          <Empty icon={ThumbsUp} title="No recommendations yet">{clubs.length ? "When someone recommends a book to one of your clubs, it will appear here." : "Join a club, and what its members recommend will appear here."}</Empty>
+          <Empty icon={ThumbsUp} title="No recommendations yet">{clubs.length ? `When someone recommends ${w.a} to one of your clubs, it will appear here.` : "Join a club, and what its members recommend will appear here."}</Empty>
         )
       ) : list.map((r) => (
         <BookLine key={r.id} book={r.book} aside={
           <>
             {made && <EditRecommendation rec={r} currentRating={ratingOf.get(r.book_id) ?? null} />}
             {(made || adminOf.has(r.club_id)) && <ActionButton action={withdrawRecommendation} hidden={{ id: r.id }} className="btn-text danger" pending="Withdrawing…">{made ? "Withdraw" : "Remove"}</ActionButton>}
-            {!made && (owned.has(r.book_id) ? <span className="meta self-center">In My books</span> : <Link className="btn-text inline-flex items-center" href={`/app/add-book?book=${r.book_id}`}><Labelled>Add to My books</Labelled></Link>)}
+            {!made && (owned.has(r.book_id) ? <span className="meta self-center">{`In ${words(r.book.kind).mine}`}</span> : <Link className="btn-text inline-flex items-center" href={`/app/add-book?book=${r.book_id}`}><Labelled>{`Add to ${words(r.book.kind).mine}`}</Labelled></Link>)}
           </>
         }>
           <p className="meta">{made ? `To ${r.club?.name ?? "a club you have left"}` : `${nameOf(r.recommender)}, to ${r.club?.name}`}, {formatDate(r.created_at, r.club?.timezone)} <Rating value={r.shared_rating} /></p>

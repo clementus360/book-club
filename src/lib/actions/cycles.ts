@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { done, explain, failed, isUuid, text, type ActionState } from "@/lib/action";
 import { zonedToUtc } from "@/lib/dates";
-import { requireUser } from "@/lib/viewer";
+import { words } from "@/lib/kinds";
+import { getViewer, requireUser } from "@/lib/viewer";
+
+/** The kind of the club in view, so messages from the database use its words. */
+const kindHere = async () => (await getViewer()).club?.kind ?? null;
 
 const refreshApp = () => revalidatePath("/app", "layout");
 const id = (form: FormData, name = "cycle_id") => String(form.get(name));
@@ -31,13 +35,13 @@ export async function createCycle(_: ActionState | null, form: FormData): Promis
   if (form.get("simple") === "1") {
     const days = (name: string, max: number) => { const n = Number(form.get(name)); return Number.isInteger(n) && n >= 1 && n <= max ? n : null; };
     const [n, v, r] = [days("nominate_days", 90), days("vote_days", 90), days("read_days", 365)];
-    if (!n || !v || !r) return failed("Each step needs a whole number of days: up to 90 to nominate, 90 to vote and 365 to read.");
+    if (!n || !v || !r) return failed(`Each step needs a whole number of days: up to 90 to nominate, 90 to vote and 365 to ${words(await kindHere()).verb}.`);
     const now = Date.now();
     const at = (d: number) => new Date(now + d * 86_400_000).toISOString();
     dates = { p_nomination_opens_at: at(0), p_nomination_closes_at: at(n), p_voting_opens_at: at(n), p_voting_closes_at: at(n + v), p_reading_starts_at: at(n + v), p_reading_ends_at: at(n + v + r) };
   }
   const { error } = await s.supabase.rpc("create_cycle", { p_club_id: s.club.id, ...dates });
-  if (error) return failed(explain(error));
+  if (error) return failed(explain(error, undefined, await kindHere()));
   refreshApp();
   return done();
 }
@@ -46,7 +50,7 @@ export async function updateSchedule(_: ActionState | null, form: FormData): Pro
   const s = await schedule(form);
   if (!s) return failed("That club could not be found.");
   const { error } = await s.supabase.rpc("update_cycle_schedule", { p_cycle_id: id(form), ...s.dates });
-  if (error) return failed(explain(error));
+  if (error) return failed(explain(error, undefined, await kindHere()));
   refreshApp();
   return done();
 }
@@ -55,7 +59,7 @@ type CycleCommand = "open_voting_now" | "close_voting_now" | "confirm_sole_nomin
 async function command(name: CycleCommand, form: FormData): Promise<ActionState> {
   const { supabase } = await requireUser();
   const { error } = await supabase.rpc(name, { p_cycle_id: id(form) });
-  if (error) return failed(explain(error));
+  if (error) return failed(explain(error, undefined, await kindHere()));
   refreshApp();
   return done();
 }
@@ -76,7 +80,7 @@ export async function reopenNominations(_: ActionState | null, form: FormData): 
   const { error } = await s.supabase.rpc("reopen_nominations", {
     p_cycle_id: id(form), p_nomination_closes_at: s.dates.p_nomination_closes_at, p_voting_closes_at: s.dates.p_voting_closes_at,
   });
-  if (error) return failed(explain(error));
+  if (error) return failed(explain(error, undefined, await kindHere()));
   refreshApp();
   return done();
 }
@@ -85,7 +89,7 @@ export async function reopenVoting(_: ActionState | null, form: FormData): Promi
   const s = await schedule(form);
   if (!s) return failed("That club could not be found.");
   const { error } = await s.supabase.rpc("reopen_voting", { p_cycle_id: id(form), p_closes_at: s.dates.p_voting_closes_at });
-  if (error) return failed(explain(error));
+  if (error) return failed(explain(error, undefined, await kindHere()));
   refreshApp();
   return done();
 }
@@ -94,7 +98,7 @@ export async function decideSelection(_: ActionState | null, form: FormData): Pr
   const { supabase } = await requireUser();
   if (!isUuid(form.get("nomination_id"))) return failed("Choose one of the books.");
   const { error } = await supabase.rpc("decide_selection", { p_cycle_id: id(form), p_nomination_id: id(form, "nomination_id"), p_reason: text(form, "reason") });
-  if (error) return failed(explain(error));
+  if (error) return failed(explain(error, undefined, await kindHere()));
   refreshApp();
   return done();
 }
@@ -108,7 +112,7 @@ export async function nominate(_: ActionState | null, form: FormData): Promise<A
   const { error } = isUuid(existing)
     ? await supabase.rpc("update_nomination", { p_nomination_id: existing, p_book_id: id(form, "book_id"), p_explanation: explanation })
     : await supabase.rpc("nominate", { p_cycle_id: id(form), p_book_id: id(form, "book_id"), p_explanation: explanation });
-  if (error) return failed(explain(error));
+  if (error) return failed(explain(error, undefined, await kindHere()));
   refreshApp();
   redirect("/app/selection");
 }
@@ -116,7 +120,7 @@ export async function nominate(_: ActionState | null, form: FormData): Promise<A
 export async function editNomination(_: ActionState | null, form: FormData): Promise<ActionState> {
   const { supabase } = await requireUser();
   const { error } = await supabase.rpc("update_nomination", { p_nomination_id: id(form, "nomination_id"), p_book_id: id(form, "book_id"), p_explanation: text(form, "explanation") });
-  if (error) return failed(explain(error));
+  if (error) return failed(explain(error, undefined, await kindHere()));
   refreshApp();
   return done();
 }
@@ -124,19 +128,19 @@ export async function editNomination(_: ActionState | null, form: FormData): Pro
 export async function withdrawNomination(_: ActionState | null, form: FormData): Promise<ActionState> {
   const { supabase } = await requireUser();
   const { error } = await supabase.rpc("withdraw_nomination", { p_nomination_id: id(form, "nomination_id") });
-  if (error) return failed(explain(error));
+  if (error) return failed(explain(error, undefined, await kindHere()));
   refreshApp();
   return done();
 }
 
 export async function submitBallot(_: ActionState | null, form: FormData): Promise<ActionState> {
   const ranking = form.getAll("ranking").map(String);
-  if (!ranking.length || !ranking.every(isUuid)) return failed("Please put every book in order before you send your vote.");
+  if (!ranking.length || !ranking.every(isUuid)) return failed(`Please put every ${words(await kindHere()).one} in order before you send your vote.`);
   const { supabase } = await requireUser();
   const { error } = await supabase.rpc("submit_ballot", { p_cycle_id: id(form), p_ranking: ranking });
   if (error) {
     refreshApp(); // if voting closed meanwhile, show that
-    return failed(explain(error));
+    return failed(explain(error, undefined, await kindHere()));
   }
   refreshApp();
   return done("Your vote is in. Only you can see it, and you can change it until voting closes.");
@@ -151,14 +155,24 @@ export async function saveProgress(_: ActionState | null, form: FormData): Promi
     const n = Number(raw);
     return Number.isInteger(n) && n >= 0 && n <= max ? n : NaN;
   };
-  const [page, percentage] = [whole("current_page", 50_000), whole("percentage", 100)];
+  const [page, percentage, episode, hours] = [whole("current_page", 50_000), whole("percentage", 100), whole("episode", 20_000), whole("hours", 10_000)];
   if (!status) return failed("Choose where you are.");
-  if (Number.isNaN(page) || Number.isNaN(percentage)) return failed("Pages and percentages should be whole numbers.");
+  if ([page, percentage, episode, hours].some(Number.isNaN)) return failed("Please use whole numbers.");
+  const now = status === "reading";
   const { error } = await supabase.from("reading_progress").upsert(
-    { cycle_id: id(form), user_id: userId, status, current_page: status === "reading" ? page : null, percentage: status === "reading" ? percentage : null },
+    { cycle_id: id(form), user_id: userId, status, current_page: now ? page : null, percentage: now ? percentage : null, episode: now ? episode : null, hours: now ? hours : null },
     { onConflict: "cycle_id,user_id" },
   );
-  if (error) return failed(error.code === "42501" ? "Progress can be updated while the club is reading this book." : explain(error));
+  if (error) return failed(error.code === "42501" ? "Progress can be updated while the club is on it." : explain(error, undefined, await kindHere()));
   refreshApp();
   return done("Saved.");
+}
+
+/** Where to have got to by the meeting: "Up to episode 6". Administrators only. */
+export async function setCycleGoal(_: ActionState | null, form: FormData): Promise<ActionState> {
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc("set_cycle_goal", { p_cycle_id: id(form), p_goal: text(form, "goal") });
+  if (error) return failed(explain(error, undefined, await kindHere()));
+  refreshApp();
+  return done(text(form, "goal") ? "Goal saved." : "Goal removed.");
 }

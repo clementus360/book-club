@@ -5,22 +5,24 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { done, explain, failed, isUuid, text, type ActionState } from "@/lib/action";
 import { asIsbn, normalizeLanguage } from "@/lib/books/normalize";
-import { enrichFromOpenLibrary } from "@/lib/books/open-library";
 import { readToken } from "@/lib/books/token";
 import { FORMAT_LABELS, type BookFormat, type BookRecord } from "@/lib/books/types";
 import type { Tables } from "@/lib/database.types";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isKind, isPlatform, words } from "@/lib/kinds";
+import { enrich } from "@/lib/media/enrich";
 import { requireUser } from "@/lib/viewer";
 
 const refreshApp = () => revalidatePath("/app", "layout");
 
-export type Candidate = Pick<Tables<"books">, "id" | "title" | "subtitle" | "authors" | "cover_url" | "publication_year" | "publisher" | "language" | "volume_number" | "edition_note" | "metadata_source">;
+export type Candidate = Pick<Tables<"books">, "id" | "title" | "subtitle" | "authors" | "cover_url" | "publication_year" | "publisher" | "language" | "volume_number" | "edition_note" | "metadata_source"> &
+  Partial<Pick<Tables<"books">, "kind" | "episodes" | "runtime_minutes" | "play_hours" | "platforms">>;
 export type Resolution =
   | { status: "ok"; book: Candidate }
   | { status: "choose"; candidates: Candidate[] }
   | { status: "error"; message: string };
 
-const COLS = "id, title, subtitle, authors, cover_url, publication_year, publisher, language, volume_number, edition_note, metadata_source";
+const COLS = "id, title, subtitle, authors, cover_url, publication_year, publisher, language, volume_number, edition_note, metadata_source, kind, episodes, runtime_minutes, play_hours, platforms";
 
 async function load(id: string): Promise<Resolution> {
   const { supabase } = await requireUser();
@@ -49,15 +51,22 @@ export async function resolveSearchResult(token: string, separate: boolean): Pro
       return { status: "choose", candidates: similar };
     }
   }
-  const enriched = await enrichFromOpenLibrary(record);
+  const enriched = await enrich(record);
   const { data: id, error } = await createAdminClient().rpc("import_book", { p_book: enriched, p_force_new: separate });
-  if (error) return { status: "error", message: explain(error, "That book could not be added. You can enter it by hand instead.") };
+  if (error) return { status: "error", message: explain(error, `That ${words(record.kind).one} could not be added. You can enter it by hand instead.`) };
   return load(id);
 }
 
+const whole = (max: number, message: string) => z.string().trim().optional().transform((v, ctx) => {
+  if (!v) return null;
+  const n = Number(v);
+  if (!Number.isInteger(n) || n < 1 || n > max) { ctx.addIssue({ code: "custom", message }); return null; }
+  return n;
+});
 const optional = (max: number) => z.string().trim().max(max).optional().transform((v) => v || null);
 const manual = z.object({
-  title: z.string().trim().min(1, "A book needs a title.").max(500),
+  kind: z.string().optional().transform((v) => (isKind(v) ? v : "book")),
+  title: z.string().trim().min(1, "Please give it a title.").max(500),
   subtitle: optional(500),
   original_title: optional(500),
   authors: z.string().max(1000).optional().transform((v) => (v ?? "").split(/[,;、，\n]/).map((s) => s.trim()).filter(Boolean).slice(0, 20)),
@@ -77,6 +86,9 @@ const manual = z.object({
     if (!Number.isInteger(n) || n < 1 || n > 50_000) { ctx.addIssue({ code: "custom", message: "The page count should be a whole number." }); return null; }
     return n;
   }),
+  episodes: whole(20_000, "The number of episodes should be a whole number."),
+  runtime_minutes: whole(3000, "The runtime should be a whole number of minutes."),
+  play_hours: whole(5000, "The hours should be a whole number."),
   language: z.string().trim().max(20).optional().transform((v) => (v ? normalizeLanguage(v) ?? v : null)),
   format: z.string().optional().transform((v) => (v && v in FORMAT_LABELS ? (v as BookFormat) : null)),
   isbn: z.string().trim().optional().transform((v, ctx) => {
@@ -94,10 +106,12 @@ const manual = z.object({
 });
 
 function readManual(form: FormData) {
+  if (!text(form, "title")) return { error: isKind(form.get("kind")) && form.get("kind") !== "book" ? "Please give it a title." : "A book needs a title." };
   const parsed = manual.safeParse(Object.fromEntries([...form].filter(([, v]) => typeof v === "string")));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Please check the details." };
   const { isbn, ...rest } = parsed.data;
-  return { book: { ...rest, isbn_10: isbn?.length === 10 ? isbn : null, isbn_13: isbn?.length === 13 ? isbn : null, alternative_titles: [] as string[] } };
+  const platforms = form.getAll("platforms").filter(isPlatform);
+  return { book: { ...rest, platforms, isbn_10: isbn?.length === 10 ? isbn : null, isbn_13: isbn?.length === 13 ? isbn : null, alternative_titles: [] as string[] } };
 }
 
 export async function resolveManual(form: FormData, separate: boolean): Promise<Resolution> {

@@ -4,6 +4,7 @@ import { ThumbsUp, BookMarked, BookOpen, CalendarDays, House, Library, Menu, Use
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { words, type Kind } from "@/lib/kinds";
 import { Icon } from "./icon";
 import { useUnread } from "./unread";
 
@@ -12,10 +13,6 @@ const GLYPHS: Record<string, LucideIcon> = {
   "/app/my-library": BookMarked, "/app/recommendations": ThumbsUp,
 };
 
-export const CLUB_LINKS = [
-  ["/app", "Home"], ["/app/current-book", "Our book"], ["/app/meetings", "Meetings"], ["/app/library", "Club shelf"], ["/app/members", "Members"],
-] as const;
-export const OWN_LINKS = [["/app/my-library", "My books"], ["/app/recommendations", "Recommendations"]] as const;
 
 function useActive() {
   const path = usePathname();
@@ -43,15 +40,15 @@ export function SideLinks({ links, label }: { links: readonly (readonly [string,
 }
 
 /** Phones: the four places people go between meetings, and a sheet for the rest. */
-export function BottomBar({ hasClub, children }: { hasClub: boolean; children: React.ReactNode }) {
+export function BottomBar({ hasClub, kind, children }: { hasClub: boolean; kind: Kind; children: React.ReactNode }) {
   const active = useActive();
   const path = usePathname();
   const { unread } = useUnread();
   const menu = useRef<HTMLDetailsElement>(null);
   useEffect(() => { if (menu.current) menu.current.open = false; }, [path]);
   const links = hasClub
-    ? ([["/app", "Home"], ["/app/current-book", "Our book"], ["/app/meetings", "Meetings"], ["/app/my-library", "My books"]] as const)
-    : ([["/app/my-library", "My books"], ["/app/recommendations", "Recommendations"]] as const);
+    ? ([["/app", "Home"], ["/app/current-book", words(kind).ours], ["/app/meetings", "Meetings"], ["/app/my-library", words(kind).mine]] as const)
+    : ([["/app/my-library", words(kind).mine], ["/app/recommendations", "Recommendations"]] as const);
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 border-t border-rule bg-sheet pb-[env(safe-area-inset-bottom)] lg:hidden">
       <div className="mx-auto flex max-w-xl items-stretch">

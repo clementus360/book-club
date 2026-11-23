@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { hintFor, type Hint } from "@/lib/hints";
+import { isKind } from "@/lib/kinds";
 
 const SELECTOR = "button, a.btn, a.btn-text, nav a, summary, [data-hint]";
 const SEEN = "commonplace:explained";
@@ -23,7 +24,8 @@ function find(target: EventTarget | null): { el: HTMLElement; hint: Hint } | nul
   const el = target instanceof Element ? target.closest<HTMLElement>(SELECTOR) : null;
   if (!el) return null;
   const own = el.dataset.hint;
-  const hint = own ? { text: own } : hintFor(labelOf(el));
+  const kind = el.closest<HTMLElement>("[data-kind]")?.dataset.kind;
+  const hint = own ? { text: own } : hintFor(labelOf(el), isKind(kind) ? kind : "book");
   return hint ? { el, hint } : null;
 }
 

@@ -1,19 +1,26 @@
 import type { Enums, Tables } from "./database.types";
+import { cap, words, type Kind } from "./kinds";
 
 export type Cycle = Tables<"reading_cycles">;
 export type Status = Enums<"cycle_status">;
 
-export const STATUS_LABEL: Record<Status, string> = {
-  scheduled: "Choosing a book starts soon",
-  nominating: "Nominate a book",
-  nominations_closed: "Nominations have closed",
-  voting: "Time to vote",
-  runoff: "A tie-break vote",
-  awaiting_decision: "A decision is needed",
-  reading: "Reading",
-  completed: "Completed",
-  cancelled: "Cancelled",
+export const statusLabel = (kind: Kind | null | undefined): Record<Status, string> => {
+  const w = words(kind);
+  return {
+    scheduled: `Choosing ${w.a} starts soon`,
+    nominating: `Nominate ${w.a}`,
+    nominations_closed: "Nominations have closed",
+    voting: "Time to vote",
+    runoff: "A tie-break vote",
+    awaiting_decision: "A decision is needed",
+    reading: w.progressing,
+    completed: "Completed",
+    cancelled: "Cancelled",
+  };
 };
+
+/** Book-club labels, as they have always been. */
+export const STATUS_LABEL = statusLabel("book");
 
 export const METHOD_LABEL: Record<Enums<"decision_method">, string> = {
   vote: "Chosen by a club vote",
@@ -23,7 +30,8 @@ export const METHOD_LABEL: Record<Enums<"decision_method">, string> = {
 };
 
 /** The deadline that matters now, if there is one. */
-export function nextDeadline(c: Cycle): { label: string; at: string } | null {
+export function nextDeadline(c: Cycle, kind?: Kind | null): { label: string; at: string } | null {
+  const doing = cap(words(kind).verbing);
   switch (c.status) {
     case "scheduled": return { label: "Nominations open", at: c.nomination_opens_at };
     case "nominating": return { label: "Nominations close", at: c.nomination_closes_at };
@@ -31,7 +39,7 @@ export function nextDeadline(c: Cycle): { label: string; at: string } | null {
     case "voting": return { label: "Voting closes", at: c.voting_closes_at };
     case "runoff": return c.runoff_closes_at ? { label: "The tie-break closes", at: c.runoff_closes_at } : null;
     case "reading": return new Date(c.reading_starts_at) > new Date()
-      ? { label: "Reading begins", at: c.reading_starts_at } : { label: "Reading ends", at: c.reading_ends_at };
+      ? { label: `${doing} begins`, at: c.reading_starts_at } : { label: `${doing} ends`, at: c.reading_ends_at };
     default: return null;
   }
 }

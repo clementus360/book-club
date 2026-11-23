@@ -51,7 +51,7 @@ export async function joinViaInvite(page: Page, name: string, path: string, club
 }
 
 export async function findBook(page: Page, query: string, title: string | RegExp) {
-  await page.getByLabel("Title, author or ISBN, in any language").fill(query);
+  await page.getByLabel(/^Title, (author or ISBN, )?in any language$/).fill(query);
   await page.getByRole("button", { name: title }).first().click();
 }
 

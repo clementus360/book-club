@@ -8,6 +8,25 @@ const WORKS = [
 export function bookStub(url, res) {
   const json = (v, status = 200) => { res.writeHead(status, { "content-type": "application/json" }); res.end(JSON.stringify(v)); };
   const q = (url.searchParams.get("q") ?? "").toLowerCase();
+  const path = url.pathname;
+  // Films (TMDB), series (TVmaze), anime (AniList) and games (IGDB, via a Twitch token).
+  if (path.startsWith("/stub/tmdb/")) {
+    if (url.searchParams.get("api_key") !== "tmdb-test") return json({ status_message: "Invalid API key" }, 401);
+    if (path.endsWith("/search/movie")) return json({ results: [{ id: 1396, title: "Stalker", original_title: "Сталкер", release_date: "1979-05-25", poster_path: "/stalker.jpg", overview: "A guide leads two men into the Zone.", original_language: "ru" }] });
+    if (path.endsWith("/watch/providers")) return json({ results: {} });
+    if (/\/3\/movie\/\d+$/.test(path)) return json({ runtime: 161, credits: { crew: [{ job: "Director", name: "Andrei Tarkovsky" }, { job: "Writer", name: "Arkady Strugatsky" }] } });
+  }
+  if (path.startsWith("/stub/tvmaze/")) {
+    if (path.endsWith("/search/shows")) return json([{ show: { id: 82, name: "Twin Peaks", premiered: "1990-04-08", language: "English", summary: "<p>A town with secrets.</p>", network: { name: "ABC" } } }]);
+    if (/\/shows\/\d+$/.test(path)) return json({ id: 82, name: "Twin Peaks", network: { name: "ABC" }, _embedded: { episodes: Array.from({ length: 30 }, (_, i) => ({ id: i })), crew: [{ type: "Creator", person: { name: "David Lynch" } }] } });
+  }
+  if (path === "/stub/anilist") return json({ data: { Page: { media: [{ id: 457, title: { romaji: "Mushishi", english: "Mushi-Shi", native: "蟲師" }, episodes: 26, startDate: { year: 2005 }, studios: { nodes: [{ name: "Artland" }] } }] }, Media: { externalLinks: [{ site: "Crunchyroll", url: "https://www.crunchyroll.com/mushishi", type: "STREAMING" }] } } });
+  if (path === "/stub/twitch/token") return json({ access_token: "igdb-token", expires_in: 5000000 });
+  if (path === "/stub/igdb/v4/games") return json([
+    { id: 11737, name: "Outer Wilds", first_release_date: 1559001600, platforms: [{ name: "PC (Microsoft Windows)" }, { name: "PlayStation 4" }], involved_companies: [{ developer: true, company: { name: "Mobius Digital" } }] },
+    { id: 7346, name: "Breath of the Wild", first_release_date: 1488499200, platforms: [{ name: "Nintendo Switch" }], involved_companies: [{ developer: true, company: { name: "Nintendo EPD" } }] },
+  ]);
+  if (path === "/stub/igdb/v4/game_time_to_beats") return json([{ normally: 22 * 3600 }]);
   // One catalogue slow, the other quick, as Open Library and Google often are.
   if (q.includes("tortoise")) {
     if (url.pathname.endsWith("/search.json")) return void setTimeout(() => json({ docs: [{ key: "/works/OL7W", title: "The Tortoise Arrives", author_name: ["Slow Writer"] }] }), 2500);

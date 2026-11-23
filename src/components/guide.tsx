@@ -1,15 +1,16 @@
 import { BookOpen, BookPlus, Check, MessagesSquare, Vote } from "lucide-react";
 import Link from "next/link";
 import { Icon, Labelled } from "./icon";
-import { STEPS, type NextStep } from "@/lib/guide";
+import { steps, type NextStep } from "@/lib/guide";
+import { words, type Kind } from "@/lib/kinds";
 
 const GLYPHS = [BookPlus, Vote, BookOpen, MessagesSquare];
 
 /** Where the club is: four steps, every time. */
-export function Steps({ current }: { current: number | null }) {
+export function Steps({ current, kind = "book" }: { current: number | null; kind?: Kind }) {
   return (
-    <ol aria-label="How a book goes, step by step" className="block-gap grid grid-cols-4 gap-x-3 sm:gap-x-5">
-      {STEPS.map((s, i) => {
+    <ol aria-label={`How ${words(kind).a} goes, step by step`} className="block-gap grid grid-cols-4 gap-x-3 sm:gap-x-5">
+      {steps(kind).map((s, i) => {
         const state = current === null ? "todo" : i < current ? "done" : i === current ? "now" : "todo";
         return (
           <li key={s.name} aria-current={state === "now" ? "step" : undefined}

@@ -126,7 +126,7 @@ export function plainText(html: string | null | undefined): string | null {
   return text ? text.slice(0, 10_000) : null;
 }
 
-const COVER_HOSTS = /^(covers\.openlibrary\.org|books\.google\.com|books\.googleusercontent\.com|lh\d\.googleusercontent\.com)$/;
+const COVER_HOSTS = /^(covers\.openlibrary\.org|books\.google\.com|books\.googleusercontent\.com|lh\d\.googleusercontent\.com|image\.tmdb\.org|static\.tvmaze\.com|s\d\.anilist\.co|images\.igdb\.com|media\.rawg\.io)$/;
 
 /** https only, and only from the providers' own image hosts. */
 export function trustedCover(url: string | null | undefined): string | null {

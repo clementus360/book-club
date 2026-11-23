@@ -18,7 +18,7 @@ export default async function NewMeeting() {
   return (
     <>
       <PageHeader kicker={club.name} title="Arrange a meeting">A title and a date are enough to start. Everyone in the club will be told.</PageHeader>
-      <MeetingForm action={createMeeting} hidden={{ club_id: club.id }} leaders={leaderOptions(members, meetings)} zone={club.timezone} defaultCycle={active?.id}
+      <MeetingForm action={createMeeting} hidden={{ club_id: club.id }} leaders={leaderOptions(members, meetings)} zone={club.timezone} kind={club.kind} defaultCycle={active?.id}
         cycles={must(cycles).map((c) => ({ id: c.id, number: c.number, title: c.book?.title ?? null }))} submit="Arrange the meeting" />
     </>
   );

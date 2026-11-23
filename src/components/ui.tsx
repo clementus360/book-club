@@ -1,7 +1,9 @@
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import type { Kind } from "@/lib/kinds";
 import { BookCover } from "./book-cover";
+import { authorsOf } from "./book-line";
 import { Icon } from "./icon";
 
 /**
@@ -23,9 +25,9 @@ export function PageHeader({ kicker, icon, title, children, action, plain = fals
   );
 }
 
-/** The same opening, for pages about one book. */
+/** The same opening, for pages about one book, film or game. */
 export function BookHeader({ book, kicker, href, facts, action, plain = false }: {
-  book: { title: string; subtitle: string | null; original_title: string | null; authors: string[]; cover_url: string | null };
+  book: { title: string; subtitle: string | null; original_title: string | null; authors: string[]; cover_url: string | null; kind?: Kind };
   kicker: ReactNode; href?: string; facts?: ReactNode; action?: ReactNode; plain?: boolean;
 }) {
   return (
@@ -37,7 +39,7 @@ export function BookHeader({ book, kicker, href, facts, action, plain = false }:
           <h1 className="page-title">{href ? <Link href={href} className="decoration-1 underline-offset-8 hover:underline">{book.title}</Link> : book.title}</h1>
           {book.subtitle && <p className="mt-1.5 font-serif text-xl text-soft">{book.subtitle}</p>}
           {book.original_title && <p className="mt-1.5 font-serif text-lg text-soft">{book.original_title}</p>}
-          <p className="mt-2 text-lg">{book.authors.join(", ") || "Author unknown"}</p>
+          {authorsOf(book) && <p className="mt-2 text-lg">{authorsOf(book)}</p>}
           {facts && <div className="mt-2 text-soft">{facts}</div>}
           {action && <div className="mt-5 flex flex-wrap gap-3">{action}</div>}
         </div>

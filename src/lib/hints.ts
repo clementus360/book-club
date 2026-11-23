@@ -6,18 +6,23 @@
  */
 export type Hint = { text: string; acts?: true };
 
+import { cap, words, type Kind, type Words } from "./kinds";
+
 const say = (text: string): Hint => ({ text });
 const acts = (text: string): Hint => ({ text, acts: true });
 
-export const HINTS: Record<string, Hint> = {
+/** The hints for one kind of club. Book clubs read exactly as they always have. */
+function build(w: Words): Record<string, Hint> {
+  const { one, many, a, verb } = w;
+  return {
   // Getting around
   "Home": say("What is happening in your club, and what to do next."),
-  "Our book": say("The book the club is choosing or reading."),
+  [w.ours]: say(`The ${one} the club is choosing or ${w.verbing}.`),
   "Meetings": say("When and where the club meets, and who is coming."),
-  "Club shelf": say("Every book this club has read, nominated or been recommended."),
+  "Club shelf": say(`Every ${one} this club has ${w.verbed}, nominated or been recommended.`),
   "Members": say("Who is in the club, and where to invite someone."),
-  "My books": say("Your own private list of books, reviews and notes."),
-  "Recommendations": say("Books members have suggested to each other, outside the vote."),
+  [w.mine]: say(`Your own private list of ${many}, reviews and notes.`),
+  "Recommendations": say(`${cap(many)} members have suggested to each other, outside the vote.`),
   "Help and guide": say("How everything works, in plain words."),
   "Notifications": say("News from your clubs."),
   "Your account": say("Your name, picture and password. Only about you."),
@@ -27,8 +32,8 @@ export const HINTS: Record<string, Hint> = {
   "Start or join a club": say("Create a new club, or find out how to join a friend’s."),
   "Help": say("Explains this page and everything you can do on it."),
   "Help with this page": say("Explains this page and everything you can do on it."),
-  "Books we have read": say("Past books, with how they were chosen and what you said about them."),
-  "All club books": say("Everything on the club’s shelf."),
+  [w.pastShelf]: say(`Past ${many}, with how they were chosen and what you said about them.`),
+  [`All club ${many}`]: say("Everything on the club’s shelf."),
   "Show older": say("Shows notifications from further back."),
   "Mark all as read": say("Clears the unread marks from your notifications."),
 
@@ -39,51 +44,52 @@ export const HINTS: Record<string, Hint> = {
   "Make another link": say("Creates a separate link for another person."),
   "Copy": say("Copies the link so you can paste it into a message."),
   "Revoke": acts("Stops this invitation link from working."),
-  "Make an administrator": acts("Lets this person manage the club: members, meetings and choosing books."),
+  "Make an administrator": acts(`Lets this person manage the club: members, meetings and choosing ${many}.`),
   "Make an ordinary member": acts("Takes away their administrator powers. They stay in the club."),
   "Remove": say("Removes this. You will be asked or shown what it affects."),
   "Leave club": say("Leaves this club. You will be asked to confirm."),
 
-  // My books
-  "Add a book": say("Search for a book to add."),
-  "Add your first book": say("Search for a book to add to your private list."),
-  "Add to my books": say("Puts this book on your private list. Nobody else sees it."),
+  // My list
+  [`Add ${a}`]: say(`Search for ${a} to add.`),
+  [`Add your first ${one}`]: say(`Search for ${a} to add to your private list.`),
+  [`Add to ${w.mine.toLowerCase()}`]: say(`Puts this ${one} on your private list. Nobody else sees it.`),
   "Save review": say("Saves your rating and review. Only you can see them."),
   "Save entry": say("Saves your status, dates and notes. Only you can see them."),
-  "Remove from my books": say("Takes the book off your list. You will be asked to confirm."),
-  "Recommend to club": say("Suggest this book to one of your clubs. This does not enter it in the vote."),
+  [`Remove from ${w.mine.toLowerCase()}`]: say(`Takes the ${one} off your list. You will be asked to confirm.`),
+  "Recommend to club": say(`Suggest this ${one} to one of your clubs. This does not enter it in the vote.`),
   "Recommend": say("Shows your recommendation to the club you picked."),
-  "Dates, notes and favourites": say("Opens more private details about this book."),
-  "Edit book details": say("Correct the details of this book, which you entered by hand."),
+  "Dates, notes and favourites": say(`Opens more private details about this ${one}.`),
+  [`Edit ${one} details`]: say(`Correct the details of this ${one}, which you entered by hand.`),
   "Add another volume": say("Add a different volume of the same series as a separate book."),
-  "Show everything": say("Clears the filter and shows every book."),
+  "Show everything": say(`Clears the filter and shows every ${one}.`),
   "Search": say("Search now."),
 
-  // Adding a book
-  "Enter the book by hand": say("Type in the details yourself if search cannot find it."),
+  // Adding something
+  [`Enter the ${one} by hand`]: say("Type in the details yourself if search cannot find it."),
   "Continue": say("Checks the details and goes to the next step."),
   "Back to search": say("Returns to searching."),
   "Back": say("Returns to searching."),
-  "Choose a different book": say("Goes back so you can pick another book."),
-  "No, mine is a different edition": say("Adds your book separately from the ones shown."),
-  "Add to the club shelf": say("Shows this book to the whole club. It does not enter it in the vote."),
-  "Remove from club shelf": acts("Takes this book off the club’s shelf."),
-  "Open my books": say("Opens your private list of books."),
-  "Open My books": say("Opens your private list of books."),
-  "Go to My books": say("Opens your private list of books."),
-  "Add to My books": say("Puts this book on your private list."),
+  [`Choose a different ${one}`]: say(`Goes back so you can pick another ${one}.`),
+  "No, mine is a different edition": say(`Adds your ${one} separately from the ones shown.`),
+    "No, mine is a different one": say(`Adds your ${one} separately from the ones shown.`),
+  "Add to the club shelf": say(`Shows this ${one} to the whole club. It does not enter it in the vote.`),
+  "Remove from club shelf": acts(`Takes this ${one} off the club’s shelf.`),
+  [`Open ${w.mine.toLowerCase()}`]: say(`Opens your private list of ${many}.`),
+  [`Open ${w.mine}`]: say(`Opens your private list of ${many}.`),
+  [`Go to ${w.mine}`]: say(`Opens your private list of ${many}.`),
+  [`Add to ${w.mine}`]: say(`Puts this ${one} on your private list.`),
   "Withdraw": acts("Takes this back. You can do it again later."),
   "Edit": say("Change what you wrote."),
 
-  // Choosing a book
-  "Start choosing a book": say("Begins the process: everyone nominates a book, then you vote."),
+  // Choosing
+  [`Start choosing ${a}`]: say(`Begins the process: everyone nominates ${a}, then you vote.`),
   "Start": say("Opens nominations now and tells everyone in the club."),
-  "Nominate a book": say("Put forward one book for the club to vote on."),
-  "Nominate this book": say("Enters this book in the club’s vote. You can change it until nominations close."),
+  [`Nominate ${a}`]: say(`Put forward one ${one} for the club to vote on.`),
+  [`Nominate this ${one}`]: say(`Enters this ${one} in the club’s vote. You can change it until nominations close.`),
   "Change my nomination": say("Swaps your nomination for this one."),
-  "Change book": say("Pick a different book to nominate."),
-  "See the nominations": say("Shows every book put forward so far."),
-  "Vote now": say("Put the books in the order you would like to read them."),
+  [`Change ${one}`]: say(`Pick a different ${one} to nominate.`),
+  "See the nominations": say(`Shows every ${one} put forward so far.`),
+  "Vote now": say(`Put the ${many} in the order you would like to ${verb} them.`),
   "Send my vote": say("Records your order. Nobody else can see it, and you can change it until voting closes."),
   "Update my vote": say("Replaces your earlier order with this one."),
   "See my vote": say("Shows the order you chose, so you can change it."),
@@ -92,26 +98,26 @@ export const HINTS: Record<string, Hint> = {
   "Give more time to nominate": say("Opens nominations again and clears any votes. You will be asked to confirm."),
   "Open voting again": say("Gives everyone another chance to vote. You will be asked to confirm."),
   "Change the dates": say("Move the deadlines."),
-  "Stop choosing this book": say("Abandons this round so the club can start afresh. You will be asked to confirm."),
-  "Stop reading this book": say("Abandons this book so the club can start afresh. You will be asked to confirm."),
-  "Record the decision": say("Choose the winning book and write down how you decided."),
+  [`Stop choosing this ${one}`]: say("Abandons this round so the club can start afresh. You will be asked to confirm."),
+  [`Stop ${w.verbing} this ${one}`]: say(`Abandons this ${one} so the club can start afresh. You will be asked to confirm.`),
+  "Record the decision": say(`Choose the winning ${one} and write down how you decided.`),
   "Decide what to do": say("Opens the choices for an administrator."),
   "Go and start the vote": say("Opens the page where you can start the vote."),
   "Go and count the votes": say("Opens the page where you can count the votes."),
-  "See the result so far": say("Shows the points each book received."),
+  "See the result so far": say(`Shows the points each ${one} received.`),
   "For administrators": say("Opens controls that affect everyone in the club."),
   "Set exact dates instead": say("Pick the day and time of every deadline yourself."),
   "Use simple lengths instead": say("Go back to choosing how many days each step lasts."),
 
-  // Reading
-  "Update my progress": say("Tells the club where you are in the book. There is no race."),
-  "See how it was chosen": say("Shows the votes that chose this book."),
-  "Back to the book": say("Opens the book the club is reading."),
-  "Finish this book": say("Moves it to Books we have read so you can choose the next. You will be asked to confirm."),
-  "Go and finish this book": say("Opens the page where you can finish this book."),
-  "Reopen this book": say("Makes this the club’s current book again. You will be asked to confirm."),
+  // Reading, watching or playing
+  "Update my progress": say(`Tells the club where you are in the ${one}. There is no race.`),
+  "See how it was chosen": say(`Shows the votes that chose this ${one}.`),
+  [`Back to the ${one}`]: say(`Opens the ${one} the club is ${w.verbing}.`),
+  [`Finish this ${one}`]: say(`Moves it to ${w.pastShelf} so you can choose the next. You will be asked to confirm.`),
+  [`Go and finish this ${one}`]: say(`Opens the page where you can finish this ${one}.`),
+  [`Reopen this ${one}`]: say(`Makes this the club’s current ${one} again. You will be asked to confirm.`),
   "Add a question": say("Write something to talk about. Everyone in the club can read it."),
-  "Add a quotation": say("Save a passage from the book for the club."),
+  "Add a quotation": say(w.kind === "book" ? "Save a passage from the book for the club." : `Save a line from the ${one} for the club.`),
   "Add a note": say("Write a thought for the whole club to read."),
   "Write a club review": say("Say what you thought, for everyone in the club to read."),
   "Edit my club review": say("Change the review the club can read."),
@@ -152,6 +158,8 @@ export const HINTS: Record<string, Hint> = {
   // Settings and help
   "Save profile": say("Saves the name and picture other members see."),
   "Save name": say("Saves the name other members see."),
+  "Save platforms": say("Saves what you play on, so your game clubs can see who could play what."),
+  "Save goal": say("Sets where everyone should have got to by the meeting. Leave it empty to remove it."),
   "Use my Google picture": say("Shows the picture from your Google account. You can change it any time."),
   "Remove picture": say("Takes your picture away. Your initial is shown instead."),
   "Change password": say("Replaces your password."),
@@ -164,21 +172,37 @@ export const HINTS: Record<string, Hint> = {
   "Read the full guide": say("Opens the guide, with everything explained in order."),
   "More": say("Shows everything else in the menu."),
   "More details": say("Shows optional details."),
-};
+  };
+}
 
-const PATTERNS: [RegExp, Hint][] = [
-  [/^Move .+ up$/, say("Moves this book one place higher in your order.")],
-  [/^Move .+ down$/, say("Moves this book one place lower in your order.")],
-  [/^Nominate for /, say("Enters this book in the club’s vote.")],
-  [/^Read /, acts("Makes this the club’s book, since it was the only one nominated.")],
-  [/^Notifications/, HINTS["Notifications"]!],
+const patterns = (w: Words, hints: Record<string, Hint>): [RegExp, Hint][] => [
+  [/^Move .+ up$/, say(`Moves this ${w.one} one place higher in your order.`)],
+  [/^Move .+ down$/, say(`Moves this ${w.one} one place lower in your order.`)],
+  [/^Nominate for /, say(`Enters this ${w.one} in the club’s vote.`)],
+  [new RegExp(`^${cap(w.verb)} `), acts(`Makes this the club’s ${w.one}, since it was the only one nominated.`)],
+  [/^Notifications/, hints["Notifications"]!],
 
-  [/^More\b/, HINTS["More"]!],
-  [/^Copied/, HINTS["Copy"]!],
+  [/^More\b/, hints["More"]!],
+  [/^Copied/, hints["Copy"]!],
 ];
 
-export function hintFor(label: string): Hint | null {
+const BUILT = new Map<Kind, { hints: Record<string, Hint>; patterns: [RegExp, Hint][] }>();
+function forKind(kind: Kind) {
+  let made = BUILT.get(kind);
+  if (!made) {
+    const hints = build(words(kind));
+    made = { hints, patterns: patterns(words(kind), hints) };
+    BUILT.set(kind, made);
+  }
+  return made;
+}
+
+/** Book-club hints, for code and tests that do not depend on a kind. */
+export const HINTS = forKind("book").hints;
+
+export function hintFor(label: string, kind: Kind = "book"): Hint | null {
   const key = label.replace(/\s+/g, " ").replace(/ \(your answer\)$/, "").trim();
-  if (Object.hasOwn(HINTS, key)) return HINTS[key]!;
-  return PATTERNS.find(([p]) => p.test(key))?.[1] ?? null;
+  const { hints, patterns: found } = forKind(kind);
+  if (Object.hasOwn(hints, key)) return hints[key]!;
+  return found.find(([p]) => p.test(key))?.[1] ?? null;
 }

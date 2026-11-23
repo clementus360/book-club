@@ -23,7 +23,7 @@ export default async function EditMeeting({ params }: { params: Promise<{ id: st
   return (
     <>
       <PageHeader kicker={club.name} title="Edit meeting" />
-      <MeetingForm action={updateMeeting} hidden={{ meeting_id: id }} meeting={meeting} leaders={leaderOptions(members, meetings)} zone={club.timezone}
+      <MeetingForm action={updateMeeting} hidden={{ meeting_id: id }} meeting={meeting} leaders={leaderOptions(members, meetings)} zone={club.timezone} kind={club.kind}
         cycles={must(cycles).map((c) => ({ id: c.id, number: c.number, title: c.book?.title ?? null }))} submit="Save changes" />
     </>
   );

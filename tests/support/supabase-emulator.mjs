@@ -325,7 +325,8 @@ export async function startEmulator({ databaseUrl, port, stub }) {
     try {
       if (url.pathname.startsWith("/storage/v1/")) return await storage(req, res, url, Buffer.concat(chunks));
       const raw = Buffer.concat(chunks).toString();
-      const body = raw ? JSON.parse(raw) : null;
+      // IGDB is sent its own query language, not JSON.
+      const body = raw && url.pathname !== "/stub/igdb/v4/games" && url.pathname !== "/stub/igdb/v4/game_time_to_beats" ? JSON.parse(raw) : null;
       // A stand-in for Resend, and a way to run the database's clock.
       if (url.pathname === "/stub/resend/emails" && req.method === "POST") {
         const key = req.headers["idempotency-key"];

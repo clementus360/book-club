@@ -1,3 +1,5 @@
+import { words, type Kind, type Words } from "./kinds";
+
 /**
  * The database words a few of its messages more formally than the interface
  * does. Keyed by the exact text raised there; a test keeps the two in step.
@@ -17,4 +19,20 @@ export const PLAIN: Record<string, string> = {
   "You have already nominated a book for this cycle. Edit or withdraw that nomination first.": "You have already nominated a book. Change or withdraw that one first.",
 };
 
-export const plain = (message: string) => PLAIN[message] ?? message;
+/**
+ * The same, for a club of another kind. Only sentences that name a book need
+ * this; the rest read the same whatever the club shares.
+ */
+const forKind = (w: Words): Record<string, string> => ({
+  "A ballot ranks every nominated book exactly once.": `Please put every ${w.one} in order before you send your vote.`,
+  "Another reading cycle is under way. Finish that one first.": `The club is already on another ${w.one}. Finish that one first.`,
+  "Only a completed cycle can be reopened.": `Only a finished ${w.one} can be reopened.`,
+  "Only a cycle the club is reading can be completed.": `You can only finish ${w.a} the club is ${w.verbing}.`,
+  "That book has already been nominated for this cycle.": `Someone has already nominated that ${w.one}. Try another.`,
+  "This club already has a reading cycle under way. Complete it before starting another.": `The club is already on ${w.a}. Finish it before choosing another.`,
+  "This cycle is finished, so its dates are fixed.": `This ${w.one} is finished, so its dates cannot change.`,
+  "You have already nominated a book for this cycle. Edit or withdraw that nomination first.": `You have already nominated ${w.a}. Change or withdraw that one first.`,
+});
+
+export const plain = (message: string, kind?: Kind | null) =>
+  (kind && kind !== "book" ? forKind(words(kind))[message] : undefined) ?? PLAIN[message] ?? message;

@@ -5,7 +5,8 @@ import { ClubSwitcher } from "@/components/club-switcher";
 import { HelpButton } from "@/components/help-button";
 import { HintLayer } from "@/components/hint-layer";
 import { Icon } from "@/components/icon";
-import { BottomBar, CLUB_LINKS, OWN_LINKS, SideLinks } from "@/components/nav";
+import { BottomBar, SideLinks } from "@/components/nav";
+import { clubLinks, ownLinks } from "@/lib/nav-links";
 import { UnreadCount, UnreadProvider } from "@/components/unread";
 import { Wordmark } from "@/components/wordmark";
 import { getViewer } from "@/lib/viewer";
@@ -15,6 +16,7 @@ export const metadata = { robots: { index: false, follow: false } };
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { profile, email, clubs, club, unread } = await getViewer();
   const list = clubs.map(({ id, name }) => ({ id, name }));
+  const kind = club?.kind ?? "book";
 
   const person = { display_name: profile.display_name, avatar_url: profile.avatar_url };
   const menu = (
@@ -22,14 +24,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {club ? (
         <div>
           <ClubSwitcher clubs={list} current={{ id: club.id, name: club.name }} />
-          <div className="mt-3"><SideLinks label="Club" links={CLUB_LINKS} /></div>
+          <div className="mt-3"><SideLinks label="Club" links={clubLinks(kind)} /></div>
         </div>
       ) : (
         <Link href="/onboarding" className="btn btn-primary self-start">Start or join a club</Link>
       )}
       <div>
         <p className="rubric mb-1">Just for you</p>
-        <SideLinks label="Just for you" links={OWN_LINKS} />
+        <SideLinks label="Just for you" links={ownLinks(kind)} />
       </div>
       <div className="border-t border-rule pt-4">
         <Link href="/app/notifications" className="flex items-center gap-2.5 py-2.5 text-[0.9688rem] text-soft hover:text-ink lg:py-1.5">
@@ -41,12 +43,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <UnreadProvider server={{ count: unread }}>
-    <div className="mx-auto max-w-[82rem] min-h-dvh lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
+    <div data-kind={kind} className="mx-auto max-w-[82rem] min-h-dvh lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
       <a href="#main" className="sr-only z-50 bg-sheet p-3 focus:not-sr-only focus:absolute focus:top-2 focus:left-2">Skip to content</a>
       <header className="flex items-center justify-between gap-4 border-b border-rule px-5 py-2.5 lg:hidden">
         <Wordmark href="/app" />
         <div className="flex items-center gap-5">
-          <HelpButton className="btn-text text-sm" />
+          <HelpButton className="btn-text text-sm" kind={kind} />
           <AccountMenu person={person} email={email} placement="down" />
         </div>
       </header>
@@ -62,12 +64,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
       <main id="main" tabIndex={-1} className="relative min-w-0 px-5 pt-8 pb-28 outline-none sm:px-8 lg:border-l lg:border-rule lg:px-14 lg:pt-12 lg:pb-20">
         <div className="max-w-[56rem]">
-          <div className="-mt-4 mb-3 hidden justify-end lg:flex"><HelpButton className="btn-text text-sm" /></div>
+          <div className="-mt-4 mb-3 hidden justify-end lg:flex"><HelpButton className="btn-text text-sm" kind={kind} /></div>
           {children}
         </div>
       </main>
       <HintLayer />
-      <BottomBar hasClub={Boolean(club)}>{menu}</BottomBar>
+      <BottomBar hasClub={Boolean(club)} kind={kind}>{menu}</BottomBar>
     </div>
     </UnreadProvider>
   );

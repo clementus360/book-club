@@ -3,13 +3,15 @@ import { Field, Select, TextArea, TimezoneSelect } from "@/components/forms/fiel
 import { nameOf } from "@/components/ui";
 import type { Tables } from "@/lib/database.types";
 import { formatDay, utcToZonedInput } from "@/lib/dates";
+import { cap, words, type Kind } from "@/lib/kinds";
 
 export type LeaderOption = { id: string; name: string; lastLed: string | null };
 
-export function MeetingForm({ action, hidden, meeting, leaders, cycles, zone, defaultCycle, submit }: {
+export function MeetingForm({ action, hidden, meeting, leaders, cycles, zone, defaultCycle, submit, kind }: {
   action: FormAction; hidden: Record<string, string>; meeting?: Tables<"meetings">; leaders: LeaderOption[];
-  cycles: { id: string; number: number; title: string | null }[]; zone: string; defaultCycle?: string | null; submit: string;
+  cycles: { id: string; number: number; title: string | null }[]; zone: string; defaultCycle?: string | null; submit: string; kind?: Kind;
 }) {
+  const w = words(kind);
   return (
     <ActionForm action={action} hidden={hidden} className="form">
       <Field label="Title" name="title" required maxLength={160} defaultValue={meeting?.title ?? ""} placeholder="First discussion" />
@@ -21,9 +23,9 @@ export function MeetingForm({ action, hidden, meeting, leaders, cycles, zone, de
       <details className="mb-5" open={Boolean(meeting)}>
         <summary className="btn-text inline-flex items-center">More details</summary>
         <div className="pt-4">
-      <Select label="Book" name="cycle_id" defaultValue={meeting ? meeting.cycle_id ?? "" : defaultCycle ?? ""}>
-        <option value="">Not about a particular book</option>
-        {cycles.map((c) => <option key={c.id} value={c.id}>{c.title ?? "The book being chosen now"}</option>)}
+      <Select label={cap(w.one)} name="cycle_id" defaultValue={meeting ? meeting.cycle_id ?? "" : defaultCycle ?? ""}>
+        <option value="">{`Not about a particular ${w.one}`}</option>
+        {cycles.map((c) => <option key={c.id} value={c.id}>{c.title ?? `The ${w.one} being chosen now`}</option>)}
       </Select>
       <Select label="Discussion leader" name="discussion_leader_id" defaultValue={meeting?.discussion_leader_id ?? ""} hint="The person who starts the conversation. Those who have led least recently come first.">
         <option value="">To be decided</option>

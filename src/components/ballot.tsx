@@ -3,14 +3,15 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useState } from "react";
 import { submitBallot } from "@/lib/actions/cycles";
+import type { Kind } from "@/lib/kinds";
 import { BookCover } from "./book-cover";
 import { Icon } from "./icon";
 import { ActionForm, Submit } from "./forms/action-form";
 
-type Entry = { id: string; book: { title: string; authors: string[]; cover_url: string | null } };
+type Entry = { id: string; book: { title: string; authors: string[]; cover_url: string | null }; note?: string | null };
 
 /** Ordering with plain buttons works the same by touch, mouse, keyboard and screen reader. */
-export function Ballot({ cycleId, entries, submitted }: { cycleId: string; entries: Entry[]; submitted: boolean }) {
+export function Ballot({ cycleId, entries, submitted }: { cycleId: string; entries: Entry[]; submitted: boolean; kind?: Kind }) {
   const [order, setOrder] = useState(entries);
   const [said, setSaid] = useState("");
 
@@ -25,7 +26,7 @@ export function Ballot({ cycleId, entries, submitted }: { cycleId: string; entri
   return (
     <ActionForm action={submitBallot} hidden={{ cycle_id: cycleId }}>
       <ol className="mb-5 border-y border-rule py-4">
-        {order.map(({ id, book }, i) => (
+        {order.map(({ id, book, note }, i) => (
           <li key={id} className="row-sm flex items-center gap-3 sm:gap-5">
             <input type="hidden" name="ranking" value={id} />
             <span className="w-7 shrink-0 text-center font-serif text-2xl text-rubric" aria-hidden>{i + 1}</span>
@@ -33,6 +34,7 @@ export function Ballot({ cycleId, entries, submitted }: { cycleId: string; entri
             <span className="min-w-0 flex-1">
               <span className="block font-serif text-lg leading-snug">{book.title}</span>
               <span className="meta block truncate">{book.authors.join(", ")}</span>
+              {note && <span className="meta block text-rubric">{note}</span>}
             </span>
             <span className="flex shrink-0">
               <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} aria-label={`Move ${book.title} up`} className="grid size-11 place-items-center text-lg hover:bg-leaf-wash disabled:opacity-25"><Icon of={ArrowUp} size="1.25rem" /></button>

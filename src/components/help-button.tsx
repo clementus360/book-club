@@ -5,14 +5,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { helpFor } from "@/lib/help";
+import type { Kind } from "@/lib/kinds";
 import { CircleQuestionMark } from "lucide-react";
 import { Icon } from "./icon";
 import { Dialog, useCloseDialog } from "./forms/dialog";
 import { hintsOff, setHintsOff } from "./hint-layer";
 
-function Body() {
+function Body({ kind }: { kind: Kind }) {
   const path = usePathname();
-  const help = helpFor(path);
+  const help = helpFor(path, kind);
   const close = useCloseDialog();
   const [off, setOff] = useState(hintsOff);
   return (
@@ -31,7 +32,7 @@ function Body() {
   );
 }
 
-export function HelpButton({ className }: { className: string }) {
-  const title = helpFor(usePathname()).title;
-  return <Dialog trigger={<><Icon of={CircleQuestionMark} /><span>Help<span className="hidden sm:inline"> with this page</span></span></>} triggerClass={className} title={title}><Body /></Dialog>;
+export function HelpButton({ className, kind = "book" }: { className: string; kind?: Kind }) {
+  const title = helpFor(usePathname(), kind).title;
+  return <Dialog trigger={<><Icon of={CircleQuestionMark} /><span>Help<span className="hidden sm:inline"> with this page</span></span></>} triggerClass={className} title={title}><Body kind={kind} /></Dialog>;
 }

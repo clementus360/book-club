@@ -28,11 +28,11 @@ export const getGuide = cache(async () => {
   ]);
   const noms = nominations ? must(nominations) : [];
   const input: GuideInput = {
-    status, isAdmin, members: members.length, everRead: (read?.count ?? 0) > 0,
+    kind: club.kind, status, isAdmin, members: members.length, everRead: (read?.count ?? 0) > 0,
     nominations: noms.length, iNominated: noms.some((n) => n.nominated_by === userId),
     votes: count ? (must(count) as { cast: number }).cast : 0,
     iVoted: votes ? must(votes).some((v) => v.round === (status === "runoff" ? 2 : 1)) : false,
-    deadline: cycle ? nextDeadline(cycle) : null,
+    deadline: cycle ? nextDeadline(cycle, club.kind) : null,
     myProgress: progress?.data?.status ?? null,
     meeting: upcoming ? { id: upcoming.id, title: upcoming.title, answered: Boolean(answer?.data), startsAt: upcoming.starts_at } : null,
     met: about.some((m) => m.status === "completed" || (m.status === "scheduled" && m !== upcoming)),

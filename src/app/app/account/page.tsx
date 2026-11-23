@@ -1,4 +1,4 @@
-import { CalendarSync, KeyRound, Mail, UserRound } from "lucide-react";
+import { CalendarSync, Gamepad2, KeyRound, Mail, UserRound } from "lucide-react";
 import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -8,13 +8,15 @@ import { Checkbox, Field } from "@/components/forms/fields";
 import { PictureForm } from "@/components/picture-form";
 import { Avatar, PageHeader, Section } from "@/components/ui";
 import { signOut, updatePassword } from "@/lib/actions/auth";
-import { updateEmailUpdates, updateProfile } from "@/lib/actions/clubs";
+import { updateEmailUpdates, updatePlatforms, updateProfile } from "@/lib/actions/clubs";
+import { isPlatform, PLATFORM_LABEL, PLATFORMS, words } from "@/lib/kinds";
 import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Your account" };
 
 export default async function Account() {
-  const { profile, email, supabase } = await getViewer();
+  const { profile, email, supabase, club, clubs } = await getViewer();
+  const gamer = clubs.some((c) => c.kind === "game");
   // Offered only to people Google has given a picture for.
   const { data: auth } = await supabase.auth.getUser();
   const meta = auth.user?.user_metadata ?? {};
@@ -37,10 +39,24 @@ export default async function Account() {
         <Fold icon={Mail} title="Email" note={profile.email_updates ? "On for important moments." : "Off."}>
           <ActionForm action={updateEmailUpdates} className="form">
             <Checkbox name="email_updates" defaultChecked={profile.email_updates} label="Email me at important moments"
-              hint="When it is time to nominate or vote, when a book is chosen, and when a meeting is arranged, moved or cancelled. Everything else stays in Notifications." />
+              hint={`When it is time to nominate or vote, when ${words(club?.kind).a} is chosen, and when a meeting is arranged, moved or cancelled. Everything else stays in Notifications.`} />
             <div className="mt-5"><Submit>Save email settings</Submit></div>
           </ActionForm>
         </Fold>
+        {gamer && (
+          <Fold icon={Gamepad2} title="What you play on" note={profile.platforms.length ? profile.platforms.filter(isPlatform).map((p) => PLATFORM_LABEL[p]).join(", ") : "Not said yet."}>
+            <ActionForm action={updatePlatforms} className="form">
+              <fieldset className="mb-5">
+                <legend className="label">Your platforms</legend>
+                <div className="grid grid-cols-2 gap-x-5">
+                  {PLATFORMS.map((p) => <label key={p} className="choice"><input type="checkbox" name="platforms" value={p} defaultChecked={profile.platforms.includes(p)} />{PLATFORM_LABEL[p]}</label>)}
+                </div>
+                <p className="hint">Your game clubs see when a nominated game is not on anything members own.</p>
+              </fieldset>
+              <Submit>Save platforms</Submit>
+            </ActionForm>
+          </Fold>
+        )}
         <Fold icon={CalendarSync} title="Calendar" note="See your meetings in your own calendar.">
           <Link className="btn btn-plain" href="/app/calendar"><Labelled>Add to my calendar</Labelled></Link>
         </Fold>

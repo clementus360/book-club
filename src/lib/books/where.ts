@@ -1,11 +1,17 @@
 import "server-only";
 
-/** Ways to get hold of a book: read free, borrow, find in a library, or buy. */
-export type Way = { kind: "free" | "borrow" | "library" | "buy"; label: string; note: string; href: string };
+import type { Kind } from "@/lib/kinds";
+import { anilistStreams } from "@/lib/media/anilist";
+import { tmdbWatch } from "@/lib/media/tmdb";
+import { tvmazeHome } from "@/lib/media/tvmaze";
+
+/** Ways to get hold of something: read free, borrow, stream, find in a library, or buy. */
+export type Way = { kind: "free" | "borrow" | "stream" | "library" | "buy"; label: string; note: string; href: string };
 
 type Book = {
   title: string; authors: string[]; isbn_13: string | null; isbn_10: string | null;
   open_library_work_id: string | null; open_library_edition_id: string | null; google_books_id: string | null;
+  kind?: Kind; metadata_source?: string; external_id?: string | null; platforms?: string[];
 };
 
 const ol = () => process.env.OPEN_LIBRARY_URL ?? "https://openlibrary.org";
@@ -107,10 +113,62 @@ export function searchWays(book: Book): Way[] {
   ];
 }
 
-const ORDER = { free: 0, borrow: 1, library: 2, buy: 3 } as const;
+const ORDER = { free: 0, borrow: 1, stream: 2, library: 3, buy: 4 } as const;
+
+/** Search links for things to watch, in the reader's country. JustWatch covers most services. */
+function justWatch(book: Book, country: string | null): Way {
+  return { kind: "stream", label: "Look for it on JustWatch", note: "Every streaming service, in your country", href: `https://www.justwatch.com/${(country ?? "us").toLowerCase()}/search?q=${encodeURIComponent(book.title)}` };
+}
+
+/** Store searches, only for platforms the game is on (or all of them if that is not known). */
+export function storeWays(book: Book): Way[] {
+  const q = encodeURIComponent(book.title);
+  const on = (p: string[]) => !book.platforms?.length || p.some((x) => book.platforms!.includes(x));
+  const stores: [string[], string, string][] = [
+    [["pc", "mac", "linux"], "Steam", `https://store.steampowered.com/search/?term=${q}`],
+    [["pc", "mac", "linux"], "GOG", `https://www.gog.com/en/games?query=${q}`],
+    [["playstation"], "PlayStation Store", `https://store.playstation.com/en-us/search/${q}`],
+    [["xbox"], "Xbox Store", `https://www.xbox.com/en-US/search/results/games?q=${q}`],
+    [["switch"], "Nintendo eShop", `https://www.nintendo.com/us/search/#q=${q}&cat=gme`],
+    [["android"], "Google Play", `https://play.google.com/store/search?q=${q}&c=apps`],
+  ];
+  return stores.filter(([p]) => on(p)).map(([, name, href]) => ({ kind: "buy", label: `Look for it on ${name}`, note: name === "GOG" ? "No copy protection" : "Search the store", href }));
+}
+
+/** Films: what TMDB (from JustWatch) knows for this country, then a JustWatch search. */
+async function filmWays(book: Book, country: string | null): Promise<Way[]> {
+  const watch = book.metadata_source === "tmdb" && book.external_id && country ? await tmdbWatch(book.external_id, country) : null;
+  const ways: Way[] = [];
+  if (watch?.stream.length) ways.push({ kind: "stream", label: `Stream it on ${watch.stream.slice(0, 3).join(", ")}`, note: "Where to watch, from JustWatch", href: watch.link });
+  if (watch?.rent.length) ways.push({ kind: "buy", label: "Rent it", note: watch.rent.slice(0, 3).join(", "), href: watch.link });
+  if (watch?.buy.length) ways.push({ kind: "buy", label: "Buy it", note: watch.buy.slice(0, 3).join(", "), href: watch.link });
+  return [...ways, justWatch(book, country)];
+}
+
+async function seriesWays(book: Book, country: string | null): Promise<Way[]> {
+  const home = book.metadata_source === "tvmaze" && book.external_id ? await tvmazeHome(book.external_id) : null;
+  const ways: Way[] = [];
+  if (home?.channel && home.site) ways.push({ kind: "stream", label: `Watch it on ${home.channel}`, note: "Its official page", href: home.site });
+  return [...ways, justWatch(book, country)];
+}
+
+async function animeWays(book: Book, country: string | null): Promise<Way[]> {
+  const streams = book.metadata_source === "anilist" && book.external_id ? await anilistStreams(book.external_id) : [];
+  return [
+    ...streams.map((s): Way => ({ kind: "stream", label: `Watch it on ${s.site}`, note: "Listed by AniList; may depend on your country", href: s.url })),
+    justWatch(book, country),
+  ];
+}
 
 /** Every way, best first: one free reading at most, and live results before plain searches. */
 export async function waysToGet(book: Book, country: string | null): Promise<Way[]> {
+  switch (book.kind ?? "book") {
+    case "film": return filmWays(book, country);
+    case "series": return seriesWays(book, country);
+    case "anime": return animeWays(book, country);
+    case "game": return storeWays(book);
+    default: break;
+  }
   const [open, google] = await Promise.all([openLibraryWays(book), googleWays(book, country)]);
   const live = [...open, ...google];
   const ways = [...live.filter((w, i) => w.kind !== "free" || live.findIndex((x) => x.kind === "free") === i), ...searchWays(book)];

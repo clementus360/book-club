@@ -35,6 +35,7 @@ export default function Home() {
           <p className="mt-6 max-w-md text-lg leading-relaxed text-soft sm:text-xl">
             Commonplace gives a book club one shared place to choose what to read, read it together, and organise conversations worth having.
           </p>
+          <p className="mt-3 max-w-md text-soft">It works for film, TV, anime and game clubs too.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/signup" className="btn btn-primary">Start a book club</Link>
             <Link href="#how-it-works" className="btn btn-plain">How it works</Link>

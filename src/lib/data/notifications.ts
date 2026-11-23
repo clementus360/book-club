@@ -18,7 +18,7 @@ export async function getNotifications(limit: number) {
 
   const [found, unread] = await Promise.all([
     supabase.from("notifications")
-      .select("id, type, reference_id, read_at, created_at, actor:profiles!notifications_actor_id_fkey(display_name), club:clubs!notifications_club_id_fkey(id, name)")
+      .select("id, type, reference_id, read_at, created_at, actor:profiles!notifications_actor_id_fkey(display_name), club:clubs!notifications_club_id_fkey(id, name, kind)")
       .eq("user_id", userId).order("created_at", { ascending: false }).limit(limit + 1),
     supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),
   ]);
@@ -43,7 +43,7 @@ export async function getNotifications(limit: number) {
 
   const notices = list.map((n): Notice => {
     const ref = n.reference_id ?? "";
-    const { text, href } = describeEvent({ type: n.type, reference_id: n.reference_id, actor: nameOf(n.actor), book: books.get(ref), meeting: meetings.get(ref), finished: finished.has(ref) });
+    const { text, href } = describeEvent({ type: n.type, reference_id: n.reference_id, actor: nameOf(n.actor), book: books.get(ref), meeting: meetings.get(ref), finished: finished.has(ref), kind: n.club?.kind });
     // Goes by way of /app/go, which marks it read and switches to its club.
     const go = new URLSearchParams({ n: n.id, ...(n.club && { club: n.club.id }), to: href });
     return { id: n.id, type: n.type, text, href: `/app/go?${go}`, meta: [n.club?.name, fromNow(n.created_at)].filter(Boolean).join(", "), read: n.read_at !== null };
