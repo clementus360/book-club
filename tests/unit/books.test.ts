@@ -3,7 +3,7 @@ import { fromGoogle } from "@/lib/books/google-books";
 import { isSamePublication, mergeResults } from "@/lib/books/merge";
 import { asIsbn, fold, inferFormat, isbn10to13, normalizeLanguage, parseVolume, pickIsbns, plainText, trustedCover } from "@/lib/books/normalize";
 import { fromOpenLibrary, toQuery } from "@/lib/books/open-library";
-import { searchProviders } from "@/lib/books/search";
+import { appendResults, searchProviders } from "@/lib/books/search";
 import { readToken, signRecord } from "@/lib/books/token";
 import type { BookRecord } from "@/lib/books/types";
 
@@ -138,6 +138,43 @@ describe("searching", () => {
     const out = await searchProviders("x");
     expect(out.unavailable).toEqual([name]);
     expect(out.results.map((r) => r.record.title)).toEqual(titles);
+  });
+  const later = (ms: number, body: unknown) => (_url: URL, init?: RequestInit) => new Promise<Response>((resolve, reject) => {
+    const t = setTimeout(() => resolve(new Response(JSON.stringify(body))), ms);
+    init?.signal?.addEventListener("abort", () => { clearTimeout(t); reject(init.signal!.reason); });
+  });
+  const slow = (o: ReturnType<typeof later>, g: ReturnType<typeof later>) =>
+    vi.stubGlobal("fetch", (url: URL, init?: RequestInit) => (String(url).includes("openlibrary") ? o(url, init) : g(url, init)));
+
+  it("shows a fast catalogue without waiting for a slow one, and adds the slow one after", async () => {
+    slow(later(300, ol), later(10, gb));
+    const seen: string[][] = [];
+    const out = await searchProviders("x", { together: 50, onceOneAnswered: 2000, onUpdate: (p) => seen.push([...p.results.map((r) => r.record.title), `waiting: ${p.waiting.join()}`]) });
+    expect(seen).toEqual([["Also found", "waiting: Open Library"], ["Also found", "Found", "waiting: "]]);
+    expect(out.results.map((r) => r.record.title)).toEqual(["Also found", "Found"]);
+  });
+  it("gives up on a slow catalogue once the other has answered", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    slow(later(5000, ol), later(10, gb));
+    const started = Date.now();
+    const out = await searchProviders("x", { together: 50, onceOneAnswered: 200 });
+    expect(Date.now() - started).toBeLessThan(1000);
+    expect(out).toMatchObject({ unavailable: ["Open Library"] });
+    expect(out.results.map((r) => r.record.title)).toEqual(["Also found"]);
+  });
+  it("stops both when the person stops waiting", async () => {
+    slow(later(5000, ol), later(5000, gb));
+    const stop = new AbortController();
+    setTimeout(() => stop.abort(), 30);
+    const started = Date.now();
+    expect((await searchProviders("x", { signal: stop.signal })).unavailable).toHaveLength(2);
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
+  it("never moves what is already shown", () => {
+    const a = book({ title: "A", isbn_13: "9780000000001" }), b = book({ title: "B", isbn_13: "9780000000002" });
+    const out = appendResults([a, b], [book({ title: "B again", isbn_13: "9780000000002", description: "More" }), book({ title: "C" })]);
+    expect(out.map((r) => [r.title, r.description])).toEqual([["A", null], ["B", "More"], ["C", null]]);
+    expect(appendResults([a], [b], 1)).toEqual([a]);
   });
   it("survives both failing", async () => {
     stub(async () => { throw new Error("down"); }, async () => { throw new Error("down"); });

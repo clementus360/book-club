@@ -79,12 +79,12 @@ export function toQuery(raw: string): string {
   return [...plain].length < 3 ? `"${plain}"` : plain;
 }
 
-export async function searchOpenLibrary(query: string): Promise<BookRecord[]> {
+export async function searchOpenLibrary(query: string, signal?: AbortSignal): Promise<BookRecord[]> {
   const url = new URL(`${base()}/search.json`);
   url.searchParams.set("q", toQuery(query));
   url.searchParams.set("limit", "12");
   url.searchParams.set("fields", FIELDS);
-  const res = await fetch(url, { headers: headers(), signal: AbortSignal.timeout(7000), next: { revalidate: 86_400 } });
+  const res = await fetch(url, { headers: headers(), signal: AbortSignal.any([AbortSignal.timeout(7000), ...(signal ? [signal] : [])]), next: { revalidate: 86_400 } });
   if (!res.ok) throw new Error(`Open Library responded ${res.status}`);
   const body = (await res.json()) as { docs?: OpenLibraryDoc[] };
   return (body.docs ?? []).flatMap((d) => fromOpenLibrary(d, query) ?? []);

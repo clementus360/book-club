@@ -37,6 +37,25 @@ function Option({ book, source, onClick, disabled }: { book: Omit<Candidate, "id
   );
 }
 
+/** Lines of JSON, as they arrive. */
+async function* lines<T>(res: Response, signal: AbortSignal): AsyncGenerator<T> {
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let rest = "";
+  try {
+    while (!signal.aborted) {
+      const { value, done } = await reader.read();
+      rest += decoder.decode(value, { stream: !done });
+      const parts = rest.split("\n");
+      rest = parts.pop() ?? "";
+      for (const part of parts) if (part.trim()) yield JSON.parse(part) as T;
+      if (done) return;
+    }
+  } finally {
+    reader.cancel().catch(() => {});
+  }
+}
+
 /** Find a book (or enter one), settle any doubt about duplicates, then confirm. */
 export function BookPicker({ initialBook, prefill, suggestions = [], suggestionsTitle, confirm }: {
   initialBook?: Candidate | null; prefill?: Partial<Tables<"books">> | null; suggestions?: Candidate[]; suggestionsTitle?: string;
@@ -48,6 +67,7 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
   const [found, setFound] = useState<Found | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
+  const [waiting, setWaiting] = useState<string[]>([]);
   const [busy, start] = useTransition();
   const request = useRef<AbortController | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -73,13 +93,28 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
     setProblem(null);
     try {
       const res = await fetch(`/api/books/search?scope=${scope}&q=${encodeURIComponent(tidy(text))}`, { signal: controller.signal });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error);
-      if (controller.signal.aborted) return;
-      // Keep the last catalogue results on screen until new ones arrive, so the list does not flicker.
-      setFound((before) => (scope === "local" && worthSearching(text) && before ? { ...before, local: body.local } : body));
-      // Keep only complete answers, so an outage is tried again next time.
-      if (scope === "all" && !body.unavailable.length) answers.set(key, body);
+      if (!res.ok || !res.headers.get("content-type")?.includes("ndjson")) {
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error);
+        if (controller.signal.aborted) return;
+        // Keep the last catalogue results on screen until new ones arrive, so the list does not flicker.
+        setFound((before) => (worthSearching(text) && before ? { ...before, local: body.local } : body));
+        return;
+      }
+      // A full search arrives a piece at a time: each catalogue as soon as it answers.
+      let first = true;
+      for await (const body of lines<Found & { waiting?: string[]; done?: boolean }>(res, controller.signal)) {
+        if (controller.signal.aborted) return;
+        // Until a catalogue has answered, keep the last results on screen rather than flicker.
+        if (first && !body.results.length && !body.done) setFound((before) => (before ? { ...before, local: body.local } : null));
+        else setFound(body);
+        first = false;
+        setWaiting(body.done ? [] : body.waiting ?? []);
+        // Keep only complete answers, so an outage is tried again next time.
+        if (body.done && !body.unavailable.length) answers.set(key, { local: body.local, results: body.results, unavailable: [] });
+        if (body.done) return;
+      }
+      throw new Error("The search was interrupted. Please try again.");
     } catch (error) {
       if (controller.signal.aborted) return;
       if (scope === "local") return; // the full search follows
@@ -138,7 +173,7 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
             </div>
           </form>
           <div aria-live="polite" className="mt-4">
-            {searching && <p className="meta">Searching…</p>}
+            {searching && <p className="meta">{found?.results.length && waiting.length === 1 ? `Still looking in ${waiting[0]}…` : "Searching…"}</p>}
             {problem && <p className="notice error">{problem}</p>}
             {found && found.unavailable.length > 0 && !searching && <p className="meta">{found.unavailable.join(" and ")} could not be reached just now, so some books may be missing. Press Enter to try again.</p>}
             {nothing && !searching && <p className="py-4 font-serif text-lg">Nothing found for that. Try another spelling, or enter the book by hand.</p>}

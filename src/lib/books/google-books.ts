@@ -45,14 +45,14 @@ export function fromGoogle(volume: GoogleVolume): BookRecord | null {
   };
 }
 
-export async function searchGoogleBooks(query: string): Promise<BookRecord[]> {
+export async function searchGoogleBooks(query: string, signal?: AbortSignal): Promise<BookRecord[]> {
   const url = new URL(`${base()}/books/v1/volumes`);
   const isbn = asIsbn(query);
   url.searchParams.set("q", isbn ? `isbn:${isbn}` : query);
   url.searchParams.set("maxResults", "12");
   url.searchParams.set("printType", "books");
   if (process.env.GOOGLE_BOOKS_API_KEY) url.searchParams.set("key", process.env.GOOGLE_BOOKS_API_KEY);
-  const res = await fetch(url, { signal: AbortSignal.timeout(5000), next: { revalidate: 86_400 } });
+  const res = await fetch(url, { signal: AbortSignal.any([AbortSignal.timeout(5000), ...(signal ? [signal] : [])]), next: { revalidate: 86_400 } });
   if (!res.ok) throw new Error(`Google Books responded ${res.status}`);
   const body = (await res.json()) as { items?: GoogleVolume[] };
   return (body.items ?? []).flatMap((v) => fromGoogle(v) ?? []);

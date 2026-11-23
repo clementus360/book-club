@@ -8,6 +8,11 @@ const WORKS = [
 export function bookStub(url, res) {
   const json = (v, status = 200) => { res.writeHead(status, { "content-type": "application/json" }); res.end(JSON.stringify(v)); };
   const q = (url.searchParams.get("q") ?? "").toLowerCase();
+  // One catalogue slow, the other quick, as Open Library and Google often are.
+  if (q.includes("tortoise")) {
+    if (url.pathname.endsWith("/search.json")) return void setTimeout(() => json({ docs: [{ key: "/works/OL7W", title: "The Tortoise Arrives", author_name: ["Slow Writer"] }] }), 2500);
+    if (url.pathname.includes("/books/v1/volumes")) return json({ items: [{ id: "hare1", volumeInfo: { title: "The Hare Was Here", authors: ["Quick Writer"] } }] });
+  }
   if (url.pathname.endsWith("/search.json")) {
     if (q.includes("outage")) return json({}, 503);
     if (q.includes("monster")) return json({ docs: [1, 2].map((n) => ({ key: "/works/OL9W", title: `Monster, Vol. ${n}`, author_name: ["Naoki Urasawa"], editions: { docs: [{ key: `/books/OL9${n}M`, title: `Monster, Vol. ${n}` }] } })) });

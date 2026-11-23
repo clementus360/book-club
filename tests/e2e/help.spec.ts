@@ -214,3 +214,23 @@ test("searching follows typing without wasting calls", async ({ browser }) => {
   expect(full()).toEqual(["solaris"]);
   expect(problems).toEqual([]);
 });
+
+test("a quick catalogue is shown without waiting for a slow one", async ({ browser }) => {
+  const problems: string[] = [];
+  const page = await person(browser, problems);
+  await signUp(page, "Tam");
+  await page.goto("/app/add-book");
+  const started = Date.now();
+  await page.getByLabel("Title, author or ISBN, in any language").fill(`tortoise ${Date.now().toString(36)}`); // new each run: the server remembers answers for a day
+  const hare = page.getByRole("button", { name: /The Hare Was Here/ });
+  await expect(hare).toBeVisible({ timeout: 2000 });
+  expect(Date.now() - started).toBeLessThan(2000);
+  await expect(page.getByText("Still looking in Open Library…")).toBeVisible();
+  await expect(page.getByRole("button", { name: /The Tortoise Arrives/ })).toBeVisible();
+  await expect(page.getByText("Still looking in Open Library…")).toHaveCount(0);
+  const order = (await page.locator("main ul button").allInnerTexts()).map((t) => t.split("\n").find((l) => /Hare|Tortoise/.test(l)));
+  expect(order).toEqual(["The Hare Was Here", "The Tortoise Arrives"]); // nothing moved
+  await hare.click();
+  await expect(page.getByRole("heading", { level: 2, name: "The Hare Was Here" })).toBeVisible();
+  expect(problems).toEqual([]);
+});

@@ -2,9 +2,9 @@ import { asIsbn } from "./normalize";
 
 /** Pauses in typing before each kind of search. Our own catalogue is cheap; the public ones are not. */
 export const LOCAL_DELAY = 200;
-export const PROVIDER_DELAY = 650;
+export const PROVIDER_DELAY = 400;
 /** At least this long between two searches of the public catalogues. */
-export const PROVIDER_GAP = 1200;
+export const PROVIDER_GAP = 700;
 
 export const tidy = (raw: string) => raw.normalize("NFC").replace(/\s+/g, " ").trim();
 export const cacheKey = (raw: string) => tidy(raw).toLowerCase();
