@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Harness } from "../support/harness";
 
@@ -213,5 +214,31 @@ describe("invitations", () => {
     const club = await h.club(a);
     for (let i = 0; i < 20; i++) await h.rpc(a, "create_invitation", { p_club_id: club });
     await expect(h.rpc(a, "create_invitation", { p_club_id: club })).rejects.toThrow(/a lot of invitations/);
+  });
+});
+
+describe("profile pictures", () => {
+  const put = (who: string, name: string) => h.as(who, "insert into storage.objects (bucket_id, name, owner) values ('avatars', $1, $2)", [name, who]);
+  it("go only in each person's own folder, a few at most", async () => {
+    const [a, b] = [await h.user(), await h.user()];
+    expect(await h.sql("select public, file_size_limit from storage.buckets where id = 'avatars'")).toEqual([{ public: true, file_size_limit: 204800 }]);
+    await put(a, `${a}/${randomUUID()}.webp`);
+    await expect(put(a, `${b}/${randomUUID()}.webp`)).rejects.toThrow(/row-level security/);
+    await expect(put(a, `${randomUUID()}.webp`)).rejects.toThrow(/row-level security/);
+    await expect(put(a, `x/${a}/${randomUUID()}.webp`)).rejects.toThrow(/row-level security/);
+    await put(a, `${a}/${randomUUID()}.webp`);
+    await put(a, `${a}/${randomUUID()}.webp`);
+    await expect(put(a, `${a}/${randomUUID()}.webp`)).rejects.toThrow(/row-level security/); // three is the most
+    expect(await h.as(b, "select name from storage.objects")).toEqual([]);
+    expect(await h.as(b, "delete from storage.objects returning name")).toEqual([]);
+    expect(await h.as(a, "delete from storage.objects returning name")).toHaveLength(3);
+    await expect(h.as(null, "insert into storage.objects (bucket_id, name) values ('avatars', 'x/y.webp')")).rejects.toThrow(/permission denied|row-level security/);
+  });
+  it("are addresses on the web, never anything else", async () => {
+    const a = await h.user();
+    const set = (url: string) => h.as(a, "update profiles set avatar_url = $1 where id = $2", [url, a]);
+    await set("https://lh3.googleusercontent.com/a/x=s96-c");
+    await set("http://127.0.0.1:54399/storage/v1/object/public/avatars/x.webp");
+    for (const bad of ["javascript:alert(1)", "http://example.com/x.png", "data:image/png;base64,AAAA", `https://${"x".repeat(1000)}`]) await expect(set(bad)).rejects.toThrow(/check constraint/);
   });
 });

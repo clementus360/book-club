@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Fold } from "@/components/fold";
 import { ActionForm, Submit } from "@/components/forms/action-form";
 import { Checkbox, Field } from "@/components/forms/fields";
+import { PictureForm } from "@/components/picture-form";
 import { Avatar, PageHeader, Section } from "@/components/ui";
 import { signOut, updatePassword } from "@/lib/actions/auth";
 import { updateEmailUpdates, updateProfile } from "@/lib/actions/clubs";
@@ -13,7 +14,11 @@ import { getViewer } from "@/lib/viewer";
 export const metadata: Metadata = { title: "Your account" };
 
 export default async function Account() {
-  const { profile, email } = await getViewer();
+  const { profile, email, supabase } = await getViewer();
+  // Offered only to people Google has given a picture for.
+  const { data: auth } = await supabase.auth.getUser();
+  const meta = auth.user?.user_metadata ?? {};
+  const google = [meta.avatar_url, meta.picture].some((u) => typeof u === "string" && /^https:\/\/[a-z0-9-]+\.googleusercontent\.com\//.test(u));
   return (
     <>
       <PageHeader icon={UserRound} kicker="Just for you" title="Your account" action={<form action={signOut}><button className="btn btn-plain"><Labelled>Sign out</Labelled></button></form>}>
@@ -21,11 +26,13 @@ export default async function Account() {
       </PageHeader>
       <Section title={<span className="flex items-center gap-3"><Avatar person={profile} />{profile.display_name}</span>} note={email}>
         <Fold icon={UserRound} title="Name and picture" note="What members of your clubs see.">
-          <ActionForm action={updateProfile} className="form">
-            <Field label="Display name" name="display_name" required maxLength={80} defaultValue={profile.display_name} />
-            <Field label="Picture address (optional)" name="avatar_url" type="url" maxLength={1000} defaultValue={profile.avatar_url ?? ""} hint="A link to an image, starting with https://" />
-            <Submit>Save profile</Submit>
-          </ActionForm>
+          <div className="form">
+            <PictureForm person={profile} google={google} />
+            <ActionForm action={updateProfile}>
+              <Field label="Display name" name="display_name" required maxLength={80} defaultValue={profile.display_name} />
+              <Submit>Save name</Submit>
+            </ActionForm>
+          </div>
         </Fold>
         <Fold icon={Mail} title="Email" note={profile.email_updates ? "On for important moments." : "Off."}>
           <ActionForm action={updateEmailUpdates} className="form">

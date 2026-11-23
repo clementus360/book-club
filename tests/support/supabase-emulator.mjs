@@ -188,6 +188,51 @@ export async function startEmulator({ databaseUrl, port, stub }) {
     send(405, {});
   }
 
+  // --------------------------------------------------------------- Storage
+  // Files are kept in memory; their rows go through storage.objects as the
+  // caller, so the real policies decide who may add or remove what.
+  const files = new Map(); // "bucket/name" -> { type, bytes }
+  async function storage(req, res, url, raw) {
+    const json = (status, v) => { res.writeHead(status, { "content-type": "application/json" }); res.end(JSON.stringify(v)); };
+    const fail = (status, message) => json(status, { statusCode: String(status), error: "Error", message });
+    const m = url.pathname.match(/^\/storage\/v1\/object\/(public\/)?([^/]+)(?:\/(.+))?$/);
+    if (!m) return fail(404, "not found");
+    const [, isPublic, bucket, name] = m;
+    if (isPublic) {
+      const { rows } = await pool.query("select 1 from storage.buckets where id = $1 and public", [bucket]);
+      const file = files.get(`${bucket}/${decodeURIComponent(name ?? "")}`);
+      if (!rows.length || !file) return fail(404, "Object not found");
+      res.writeHead(200, { "content-type": file.type, "cache-control": "public, max-age=31536000" });
+      return res.end(file.bytes);
+    }
+    const claims = readJwt((req.headers.authorization ?? "").replace(/^Bearer /i, ""));
+    if (!claims) return fail(401, "Invalid JWT");
+    try {
+      if (req.method === "POST" && name) {
+        const key = decodeURIComponent(name);
+        const type = String(req.headers["content-type"] ?? "").split(";")[0];
+        const { rows: [b] } = await pool.query("select * from storage.buckets where id = $1", [bucket]);
+        if (!b) return fail(404, "Bucket not found");
+        if (b.file_size_limit && raw.length > Number(b.file_size_limit)) return fail(413, "The object exceeded the maximum allowed size");
+        if (b.allowed_mime_types && !b.allowed_mime_types.includes(type)) return fail(415, `mime type ${type} is not supported`);
+        await asRole(claims, (c) => c.query("insert into storage.objects (bucket_id, name, owner, metadata) values ($1, $2, $3, $4)", [bucket, key, claims.sub, JSON.stringify({ size: raw.length, mimetype: type })]));
+        files.set(`${bucket}/${key}`, { type, bytes: raw });
+        return json(200, { Key: `${bucket}/${key}`, Id: randomUUID() });
+      }
+      if (req.method === "DELETE" && !name) {
+        const { prefixes = [] } = JSON.parse(raw.toString() || "{}");
+        const gone = await asRole(claims, async (c) => (await c.query("delete from storage.objects where bucket_id = $1 and name = any($2) returning name", [bucket, prefixes])).rows);
+        for (const g of gone) files.delete(`${bucket}/${g.name}`);
+        return json(200, gone.map((g) => ({ name: g.name, bucket_id: bucket })));
+      }
+      return fail(405, "not supported here");
+    } catch (e) {
+      if (/row-level security/.test(e.message)) return fail(403, "new row violates row-level security policy");
+      if (e.code === "23505") return fail(409, "The resource already exists");
+      throw e;
+    }
+  }
+
   // ------------------------------------------------------------------ Auth
   const publicUser = (u) => ({ id: u.id, aud: "authenticated", role: "authenticated", email: u.email, user_metadata: u.raw_user_meta_data, app_metadata: {}, created_at: u.created_at, identities: [] });
   function session(u) {
@@ -272,6 +317,7 @@ export async function startEmulator({ databaseUrl, port, stub }) {
     for await (const c of req) chunks.push(c);
     const url = new URL(req.url, `http://127.0.0.1:${port}`);
     try {
+      if (url.pathname.startsWith("/storage/v1/")) return await storage(req, res, url, Buffer.concat(chunks));
       const raw = Buffer.concat(chunks).toString();
       const body = raw ? JSON.parse(raw) : null;
       // A stand-in for Resend, and a way to run the database's clock.

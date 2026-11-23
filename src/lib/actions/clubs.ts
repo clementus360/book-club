@@ -146,13 +146,11 @@ export async function updateClub(_: ActionState | null, form: FormData): Promise
 export async function updateProfile(_: ActionState | null, form: FormData): Promise<ActionState> {
   const { supabase, userId } = await requireUser();
   const name = text(form, "display_name");
-  const avatar = text(form, "avatar_url");
   if (!name || name.length > 80) return failed("A name of up to 80 characters is needed.");
-  if (avatar && !avatar.startsWith("https://")) return failed("The picture address needs to start with https://");
-  const { error } = await supabase.from("profiles").update({ display_name: name, avatar_url: avatar }).eq("id", userId);
+  const { error } = await supabase.from("profiles").update({ display_name: name }).eq("id", userId);
   if (error) return failed(explain(error));
   refreshApp();
-  return done("Profile saved.");
+  return done("Name saved.");
 }
 
 

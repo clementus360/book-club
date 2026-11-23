@@ -275,8 +275,8 @@ test("settings: profile, club, password, closing a club", async ({ browser }) =>
   await expect(page.getByLabel("Display name")).toBeHidden();
   await page.getByText("Name and picture").click();
   await page.getByLabel("Display name").fill("Gilberto");
-  await page.getByRole("button", { name: "Save profile" }).click();
-  await expect(page.getByText("Profile saved.")).toBeVisible();
+  await page.getByRole("button", { name: "Save name" }).click();
+  await expect(page.getByText("Name saved.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Gilberto" })).toBeVisible();
   await page.getByText("Choose one, or change it.").click();
   await page.getByLabel("New password", { exact: true }).fill("yet another password");

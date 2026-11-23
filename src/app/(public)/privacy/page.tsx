@@ -10,7 +10,7 @@ export default function Privacy() {
       <p>Commonplace is for small, private groups of readers. This page explains what it keeps and who can see it.</p>
       <h2>What is kept</h2>
       <p>Your email address and a securely hashed password, used to sign you in. The name and, if you add one, the picture you choose to be known by. The books, reviews, notes, nominations, votes, progress, attendance and discussion you record.</p>
-      {googleAuth() && <p>If you choose to sign in with Google, Google tells us your name and email address. We do not use your Google picture or ask for anything else.</p>}
+      {googleAuth() && <p>If you choose to sign in with Google, Google tells us your name, email address and the address of your Google picture. Your Google picture is only shown if you choose it in Your account. We ask for nothing else.</p>}
       <h2>What only you can see</h2>
       <p>My books: your notes, your personal ratings and your personal reviews. Your votes: other members, including administrators of your club, see totals after voting closes but never how you ranked the books. In a very small club, totals alone may still allow people to guess.</p>
       <h2>What your club can see</h2>
@@ -20,7 +20,7 @@ export default function Privacy() {
       <h2>Your calendar</h2>
       <p>Commonplace never reads your calendar. If you choose to see your meetings in one, it fetches them from a private link made for you, showing the name, time and place of each meeting and which club it is for. We keep only a scrambled form of the link, and you can turn it off at any time. Your calendar’s provider then holds those details too, as it does for anything else in it.</p>
       <h2>Books and covers</h2>
-      <p>When you search for a book, the words you type are sent by our server to Open Library and Google Books. They do not receive your name or account. Cover images load in your browser from those services, and member pictures or manually added covers load from wherever they are hosted, so those hosts see your IP address.</p>
+      <p>When you search for a book, the words you type are sent by our server to Open Library and Google Books. They do not receive your name or account. Cover images load in your browser from those services, and manually added covers from wherever they are hosted, so those hosts see your IP address. A picture you upload is made small in your browser, then stored with Supabase at an unguessable address that is not listed anywhere; anyone who has that address can see the picture. A Google picture you choose loads from Google.</p>
       <h2>Cookies</h2>
       <p>Cookies keep you signed in and remember which club you were looking at. There is no advertising and no tracking.</p>
       <h2>Services used to run Commonplace</h2>

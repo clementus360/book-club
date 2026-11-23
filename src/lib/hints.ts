@@ -151,6 +151,9 @@ export const HINTS: Record<string, Hint> = {
 
   // Settings and help
   "Save profile": say("Saves the name and picture other members see."),
+  "Save name": say("Saves the name other members see."),
+  "Use my Google picture": say("Shows the picture from your Google account. You can change it any time."),
+  "Remove picture": say("Takes your picture away. Your initial is shown instead."),
   "Change password": say("Replaces your password."),
   "Save email settings": say("Saves whether you are emailed at important moments."),
   "Stop these emails": say("Turns off emails from Commonplace. The app keeps working as before."),
