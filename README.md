@@ -27,11 +27,13 @@ With Docker you can use a local Supabase instead: `npx supabase start`, then cop
 | --- | --- | --- |
 | `SUPABASE_URL` | yes | Project URL |
 | `SUPABASE_PUBLISHABLE_KEY` | yes | Publishable key |
-| `SUPABASE_SECRET_KEY` | yes, server only | The `sb_secret_…` key. `SUPABASE_SERVICE_ROLE_KEY` is also accepted. One call, `import_book()`, so only records this server fetched enter the shared catalogue. Also derives the key that signs search results |
+| `SUPABASE_SECRET_KEY` | yes, server only | The `sb_secret_…` key. `SUPABASE_SERVICE_ROLE_KEY` is also accepted. Used for `import_book()`, so only records this server fetched enter the shared catalogue, and to hand out email. Also derives the key that signs search results |
 | `SITE_URL` | in production | Invitation and email links. Falls back to the Vercel production domain |
 | `GOOGLE_BOOKS_API_KEY` | no, server only | Without it, Google's shared anonymous quota applies and is often exhausted (HTTP 429). Open Library and manual entry carry on regardless |
 | `OPEN_LIBRARY_CONTACT` | no | Contact address added to the User-Agent sent to Open Library, as they ask of regular users |
 | `CONTACT_EMAIL` | no | Shown on the privacy and terms pages |
+| `RESEND_API_KEY` | for email, server only | Resend API key with sending access. Without it and `EMAIL_FROM`, nothing is emailed |
+| `EMAIL_FROM` | for email | Sender, on a domain verified in Resend, e.g. `Commonplace <club@mail.example.com>` |
 
 All of these are read on the server only, so none needs a `NEXT_PUBLIC_` prefix. The prefixed names (`NEXT_PUBLIC_SUPABASE_URL` and so on) still work, except that the secret and API keys must never have one.
 
@@ -78,6 +80,8 @@ supabase/migrations     schema, rules, RLS, grants
 **Spacing.** One set of numbers, described in `src/app/globals.css` and used only through `PageHeader`, `BookHeader`, `Section`, `Side`, `Toolbar`, `Fold` and the `.row` classes. `tests/e2e/spacing.spec.ts` measures every page in the app against it.
 
 **Guidance.** `src/lib/guide.ts` decides the one thing to suggest to each person, `src/lib/hints.ts` says what every control does, and `src/lib/help.ts` holds the help for each page. A new button needs an entry in `hints.ts`; `tests/e2e/help.spec.ts` fails without one. The interface never says "cycle", "ballot" or "runoff": `src/lib/plain.ts` rewords the few database messages that do.
+
+**Email.** Milestones only (time to nominate or vote, a book chosen, a meeting arranged, moved or cancelled, a date to find), through Resend. A trigger queues one row per email in `private.email_outbox`. Each minute `pg_cron` runs `private.tick()`, which also moves every club past its deadlines, and if anything is owed it calls `POST /api/email/send` through `pg_net` with a secret that never leaves the database. That route hands out emails with `claim_emails()` (service role only), sends each with an idempotency key, and records the result: up to five tries, nothing older than two days. Unsubscribe links are signed, ask before acting, and support one-click unsubscribe. Without `RESEND_API_KEY` and `EMAIL_FROM` nothing is sent. Where `pg_cron` is missing (plain Postgres, as in the tests), deadlines are still kept as pages load.
 
 **Calendars.** Nothing to set up. A meeting opens in Google or Outlook through a prefilled link. "Add to my calendar" subscribes to `/calendar/<token>.ics`, read without a session by `calendar_feed()`, the second of the two functions a signed-out caller may use. The token is derived from `SUPABASE_SECRET_KEY` and a nonce, and only its hash is stored, so replacing that key ends existing subscriptions once their owner next makes a link. Commonplace never reads anyone's calendar: dates are found by asking (`meeting_polls`).
 

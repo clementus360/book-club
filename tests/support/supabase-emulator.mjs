@@ -52,6 +52,7 @@ export async function startEmulator({ databaseUrl, port, stub }) {
   const codes = new Map(); // pkce code -> { user, challenge }
   const links = new Map(); // one-time email token -> { user, challenge, type }
   const mail = [];
+  const outbox = []; // what was "sent" through Resend
   let googleSays = {};
 
   async function asRole(claims, fn) {
@@ -273,6 +274,16 @@ export async function startEmulator({ databaseUrl, port, stub }) {
     try {
       const raw = Buffer.concat(chunks).toString();
       const body = raw ? JSON.parse(raw) : null;
+      // A stand-in for Resend, and a way to run the database's clock.
+      if (url.pathname === "/stub/resend/emails" && req.method === "POST") {
+        const key = req.headers["idempotency-key"];
+        if (!outbox.some((m) => m.key === key)) outbox.push({ key, auth: req.headers.authorization, ...body });
+        res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify({ id: randomUUID() }));
+      }
+      if (url.pathname === "/emulator/emails") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(outbox.filter((m) => !url.searchParams.get("to") || m.to.includes(url.searchParams.get("to"))))); }
+      if (url.pathname === "/emulator/tick") { await pool.query("select private.tick()"); res.writeHead(204); return res.end(); }
+      if (url.pathname === "/emulator/email-secret") { const { rows } = await pool.query("select value from private.settings where key = 'email_secret'"); res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(rows[0].value)); }
+      if (url.pathname === "/emulator/sql") { await pool.query(body.sql, body.params ?? []); res.writeHead(204); return res.end(); }
       if (url.pathname.startsWith("/stub/")) return await stub(url, res);
       if (url.pathname === "/emulator/mail") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(mail.filter((m) => m.to === url.searchParams.get("to")))); }
       if (url.pathname === "/emulator/google") { googleSays = body; res.writeHead(204); return res.end(); }

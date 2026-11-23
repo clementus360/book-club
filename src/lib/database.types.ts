@@ -757,6 +757,7 @@ export type Database = {
           avatar_url: string | null;
           created_at: string;
           updated_at: string;
+          email_updates: boolean;
         };
         Insert: {
           id: string;
@@ -764,6 +765,7 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
+          email_updates?: boolean;
         };
         Update: {
           id?: string;
@@ -771,6 +773,7 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
+          email_updates?: boolean;
         };
         Relationships: [
         ];
@@ -1049,7 +1052,9 @@ export type Database = {
       calendar_feed: { Args: { p_token: string | null }; Returns: Json };
       can_edit_book: { Args: { p_book_id: string }; Returns: boolean };
       cancel_cycle: { Args: { p_cycle_id: string }; Returns: undefined };
+      check_email_secret: { Args: { p_secret: string | null }; Returns: boolean };
       choose_meeting_time: { Args: { p_time_id: string }; Returns: string };
+      claim_emails: { Args: { p_limit: number }; Returns: Json };
       close_club: { Args: { p_club_id: string }; Returns: undefined };
       close_voting_now: { Args: { p_cycle_id: string }; Returns: undefined };
       complete_cycle: { Args: { p_cycle_id: string }; Returns: undefined };
@@ -1063,6 +1068,7 @@ export type Database = {
       decide_selection: { Args: { p_cycle_id: string; p_nomination_id: string; p_reason: string | null }; Returns: undefined };
       edit_recommendation: { Args: { p_id: string; p_text: string | null; p_rating_mode: string | null; p_shared_review: string | null }; Returns: undefined };
       find_similar_books: { Args: { p_book: Json }; Returns: Database["public"]["Tables"]["books"]["Row"][] };
+      finish_emails: { Args: { p_sent: string[]; p_failed: Json }; Returns: undefined };
       import_book: { Args: { p_book: Json; p_force_new?: boolean }; Returns: string };
       leave_club: { Args: { p_club_id: string }; Returns: undefined };
       nominate: { Args: { p_cycle_id: string; p_book_id: string; p_explanation?: string | null }; Returns: string };
@@ -1077,6 +1083,7 @@ export type Database = {
       reopen_voting: { Args: { p_cycle_id: string; p_closes_at: string | null }; Returns: undefined };
       revoke_invitation: { Args: { p_invitation_id: string }; Returns: undefined };
       save_club_review: { Args: { p_cycle_id: string; p_rating: number | null; p_text: string | null }; Returns: undefined };
+      set_email_updates: { Args: { p_user: string; p_on: boolean }; Returns: undefined };
       set_member_role: { Args: { p_club_id: string; p_user_id: string; p_role: Database["public"]["Enums"]["club_role"] }; Returns: undefined };
       stop_meeting_poll: { Args: { p_poll_id: string }; Returns: undefined };
       submit_ballot: { Args: { p_cycle_id: string; p_ranking: string[] }; Returns: undefined };

@@ -155,3 +155,12 @@ export async function updateProfile(_: ActionState | null, form: FormData): Prom
   return done("Profile saved.");
 }
 
+
+export async function updateEmailUpdates(_: ActionState | null, form: FormData): Promise<ActionState> {
+  const { supabase, userId } = await requireUser();
+  const on = form.get("email_updates") === "on";
+  const { error } = await supabase.from("profiles").update({ email_updates: on }).eq("id", userId);
+  if (error) return failed(explain(error));
+  refreshApp();
+  return done(on ? "You will be emailed at important moments." : "Emails are off.");
+}

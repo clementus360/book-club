@@ -165,6 +165,85 @@ describe("calendar links", () => {
   });
 });
 
+describe("email", () => {
+  const owed = (who: string) => h.sql("select n.type from private.email_outbox o join notifications n on n.id = o.notification_id where o.user_id = $1 order by n.created_at", [who]).then((r) => r.map((x) => x.type));
+  it("is owed for milestones only, to people who want it", async () => {
+    const { admin, member, club, cycle } = await readingClub(3);
+    const quiet = (await h.sql("select user_id from club_memberships where club_id = $1 and user_id not in ($2, $3)", [club, admin, member]))[0]!.user_id as string;
+    expect(await owed(member)).toEqual(expect.arrayContaining(["nominations_opened", "voting_opened", "book_selected"]));
+    expect(await owed(member)).not.toContain("book_nominated");
+    await h.as(quiet, "update profiles set email_updates = false where id = $1", [quiet]);
+    await h.sql("delete from private.email_outbox");
+    const id = await meeting(admin, club, { cycle_id: cycle });
+    expect(await owed(member)).toEqual(["meeting_created"]);
+    expect(await owed(quiet)).toEqual([]);
+    expect(await owed(admin)).toEqual([]); // nobody is told about what they did themselves
+    await h.as(admin, "update meetings set status = 'cancelled' where id = $1", [id]);
+    expect(await owed(member)).toEqual(["meeting_created", "meeting_cancelled"]);
+  });
+  it("is handed out once, with what the email needs, and only to the server", async () => {
+    const { admin, member, club } = await readingClub();
+    await h.sql("delete from private.email_outbox");
+    await meeting(admin, club, { title: "Supper", location: "Here", agenda: "SECRET" });
+    const claim = async () => (await h.as("service", "select claim_emails(10) c"))[0]!.c as Record<string, unknown>[];
+    const [first, ...rest] = await claim();
+    expect(rest).toEqual([]);
+    expect(first).toMatchObject({ type: "meeting_created", user_id: member, club_id: club, meeting: { title: "Supper", location: "Here" } });
+    expect(first!.email).toMatch(/@/);
+    expect(JSON.stringify(first)).not.toContain("SECRET");
+    expect(await claim()).toEqual([]); // claimed: not handed out again for ten minutes
+    await h.as("service", "select finish_emails($1, '{}')", [[first!.id]]);
+    await h.sql("update private.email_outbox set claimed_at = now() - interval '1 hour'");
+    expect(await claim()).toEqual([]); // sent is sent
+    for (const who of [null, member, admin]) {
+      for (const call of ["select claim_emails(10)", "select finish_emails('{}', '{}')", "select check_email_secret('x')", `select set_email_updates('${member}', false)`])
+        await expect(h.as(who, call)).rejects.toThrow(/permission denied/);
+      await expect(h.as(who, "select * from private.email_outbox")).rejects.toThrow(/permission denied/);
+      await expect(h.as(who, "select * from private.settings")).rejects.toThrow(/permission denied/);
+    }
+  });
+  it("is retried, then given up on", async () => {
+    const { admin, club } = await readingClub();
+    await h.sql("delete from private.email_outbox");
+    await meeting(admin, club);
+    const claim = async () => ((await h.as("service", "select claim_emails(10) c"))[0]!.c as { id: string }[]).map((x) => x.id);
+    for (let i = 0; i < 5; i++) {
+      const [id] = await claim();
+      expect(id).toBeTruthy();
+      await h.as("service", "select finish_emails('{}', $1)", [{ [id!]: "429 daily quota" }]);
+      await h.sql("update private.email_outbox set claimed_at = now() - interval '11 minutes'");
+    }
+    expect(await claim()).toEqual([]);
+    expect(await h.sql("select attempts, failed_at is not null failed, last_error from private.email_outbox")).toEqual([{ attempts: 5, failed: true, last_error: "429 daily quota" }]);
+    await meeting(admin, club);
+    await h.sql("update private.email_outbox set created_at = now() - interval '3 days' where failed_at is null");
+    expect(await claim()).toEqual([]); // too old to be useful
+  });
+  it("checks the secret it is called with", async () => {
+    const [secret] = (await h.sql("select value from private.settings where key = 'email_secret'")).map((r) => r.value as string);
+    expect(secret).toMatch(/^[0-9a-f]{64}$/);
+    expect((await h.as("service", "select check_email_secret($1) ok", [secret]))[0]!.ok).toBe(true);
+    for (const wrong of ["", "x", secret!.toUpperCase(), `${secret}0`]) expect((await h.as("service", "select check_email_secret($1) ok", [wrong]))[0]!.ok).toBe(false);
+    await expect(h.sql("select private.set_app_url('https://books.example.com/')")).rejects.toThrow(/without a path/);
+    await h.sql("select private.set_app_url('https://books.example.com')");
+  });
+});
+
+describe("the clock", () => {
+  it("moves every club past its deadlines without anyone looking", async () => {
+    const v = await h.votingClub(2, 2);
+    const other = await h.votingClub(2, 2);
+    await h.rpc(v.people[0]!, "submit_ballot", { p_cycle_id: v.cycle, p_ranking: v.nominations });
+    await h.sql("update reading_cycles set voting_closes_at = voting_opens_at + interval '1 millisecond' where id = any ($1)", [[v.cycle, other.cycle]]);
+    await h.sql("select private.tick()");
+    const status = async (id: string) => (await h.cycleRow(id)).status;
+    expect(await status(v.cycle)).toBe("reading"); // one ballot: a winner
+    expect(await status(other.cycle)).toBe("awaiting_decision"); // nobody voted
+    expect((await h.sql("select type from activity_events where reference_id = $1", [other.cycle])).map((r) => r.type)).toContain("decision_needed");
+    await h.sql("select private.tick()"); // and again is harmless
+  });
+});
+
 describe("meetings", () => {
   it("are created, edited and cancelled by administrators", async () => {
     const { admin, member, club, cycle } = await readingClub();

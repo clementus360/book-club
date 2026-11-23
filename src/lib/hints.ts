@@ -152,6 +152,8 @@ export const HINTS: Record<string, Hint> = {
   // Settings and help
   "Save profile": say("Saves the name and picture other members see."),
   "Change password": say("Replaces your password."),
+  "Save email settings": say("Saves whether you are emailed at important moments."),
+  "Stop these emails": say("Turns off emails from Commonplace. The app keeps working as before."),
   "Save club settings": say("Saves these details for the whole club."),
   "Close the club": say("Permanently deletes this club. You will be asked to confirm."),
   "Create the club": say("Creates a private club with you as its administrator."),

@@ -14,6 +14,7 @@ const env = {
   ...process.env,
   SUPABASE_URL: emulator.url, SUPABASE_PUBLISHABLE_KEY: anonKey, SUPABASE_SECRET_KEY: serviceKey,
   GOOGLE_AUTH: "1", SITE_URL: `http://localhost:${APP}`,
+  RESEND_API_KEY: "re_test", EMAIL_FROM: "Commonplace <club@mail.example.test>", RESEND_API_URL: `${emulator.url}/stub/resend`,
   ...(live ? {} : { OPEN_LIBRARY_URL: emulator.url + "/stub/ol", GOOGLE_BOOKS_URL: emulator.url + "/stub/gb" }),
 };
 let child;

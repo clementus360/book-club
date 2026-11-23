@@ -1,13 +1,13 @@
-import { CalendarSync, KeyRound, UserRound } from "lucide-react";
+import { CalendarSync, KeyRound, Mail, UserRound } from "lucide-react";
 import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Fold } from "@/components/fold";
 import { ActionForm, Submit } from "@/components/forms/action-form";
-import { Field } from "@/components/forms/fields";
+import { Checkbox, Field } from "@/components/forms/fields";
 import { Avatar, PageHeader, Section } from "@/components/ui";
 import { signOut, updatePassword } from "@/lib/actions/auth";
-import { updateProfile } from "@/lib/actions/clubs";
+import { updateEmailUpdates, updateProfile } from "@/lib/actions/clubs";
 import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Your account" };
@@ -25,6 +25,13 @@ export default async function Account() {
             <Field label="Display name" name="display_name" required maxLength={80} defaultValue={profile.display_name} />
             <Field label="Picture address (optional)" name="avatar_url" type="url" maxLength={1000} defaultValue={profile.avatar_url ?? ""} hint="A link to an image, starting with https://" />
             <Submit>Save profile</Submit>
+          </ActionForm>
+        </Fold>
+        <Fold icon={Mail} title="Email" note={profile.email_updates ? "On for important moments." : "Off."}>
+          <ActionForm action={updateEmailUpdates} className="form">
+            <Checkbox name="email_updates" defaultChecked={profile.email_updates} label="Email me at important moments"
+              hint="When it is time to nominate or vote, when a book is chosen, and when a meeting is arranged, moved or cancelled. Everything else stays in Notifications." />
+            <div className="mt-5"><Submit>Save email settings</Submit></div>
           </ActionForm>
         </Fold>
         <Fold icon={CalendarSync} title="Calendar" note="See your meetings in your own calendar.">

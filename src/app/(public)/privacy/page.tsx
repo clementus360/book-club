@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Privacy" };
 
 export default function Privacy() {
   return (
-    <Legal title="Privacy" updated="22 November 2026">
+    <Legal title="Privacy" updated="23 November 2026">
       <p>Commonplace is for small, private groups of readers. This page explains what it keeps and who can see it.</p>
       <h2>What is kept</h2>
       <p>Your email address and a securely hashed password, used to sign you in. The name and, if you add one, the picture you choose to be known by. The books, reviews, notes, nominations, votes, progress, attendance and discussion you record.</p>
@@ -15,6 +15,8 @@ export default function Privacy() {
       <p>My books: your notes, your personal ratings and your personal reviews. Your votes: other members, including administrators of your club, see totals after voting closes but never how you ranked the books. In a very small club, totals alone may still allow people to guess.</p>
       <h2>What your club can see</h2>
       <p>Your name and picture, what you recommend to that club and whatever you choose to share with the recommendation, what you nominate, your reading progress, which times suit you and whether you are coming to a meeting, and anything you write in the club’s discussion or club reviews. One club never sees what you do in another. If you leave, what you contributed stays in the club’s record under your name. You can withdraw your recommendations at any time.</p>
+      <h2>Email</h2>
+      <p>Unless you turn it off, Commonplace emails you at important moments in your clubs: when it is time to nominate or vote, when a book is chosen, and when a meeting is arranged, moved or cancelled. These emails are sent through Resend, which therefore handles your email address and the email itself. They never include reviews, notes or how anyone voted. Every email has a link to stop them, and you can switch them off in Your account.</p>
       <h2>Your calendar</h2>
       <p>Commonplace never reads your calendar. If you choose to see your meetings in one, it fetches them from a private link made for you, showing the name, time and place of each meeting and which club it is for. We keep only a scrambled form of the link, and you can turn it off at any time. Your calendar’s provider then holds those details too, as it does for anything else in it.</p>
       <h2>Books and covers</h2>
@@ -22,7 +24,7 @@ export default function Privacy() {
       <h2>Cookies</h2>
       <p>Cookies keep you signed in and remember which club you were looking at. There is no advertising and no tracking.</p>
       <h2>Services used to run Commonplace</h2>
-      <p>Accounts and data are held by Supabase, and the website is served by Vercel. Administrators of this installation can technically access stored data in order to operate it.</p>
+      <p>Accounts and data are held by Supabase, the website is served by Vercel, and email is sent by Resend. Administrators of this installation can technically access stored data in order to operate it.</p>
       <h2>Your choices</h2>
       <p>You can edit or delete your library entries, reviews and notes yourself. To have your account deleted or to receive a copy of your data, get in touch.</p>
     </Legal>

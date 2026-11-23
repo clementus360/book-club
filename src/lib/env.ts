@@ -23,6 +23,11 @@ export const secretKey = () => required("SUPABASE_SECRET_KEY", process.env.SUPAB
 /** On only once Google is set up in Supabase, so nobody meets a button that fails. */
 export const googleAuth = () => (process.env.GOOGLE_AUTH || process.env.NEXT_PUBLIC_GOOGLE_AUTH) === "1";
 
+/** Resend, for email about milestones. Without both, nothing is emailed. Server only. */
+export const resendKey = () => process.env.RESEND_API_KEY || null;
+/** For example: Commonplace <club@mail.example.com>, on a domain verified in Resend. */
+export const emailFrom = () => process.env.EMAIL_FROM || null;
+
 export const contactEmail = () => process.env.CONTACT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || null;
 
 /** Taken from configuration, never from the Host header, because it ends up in emails. */
