@@ -12,9 +12,9 @@ test("three friends read a book together, start to finish", async ({ browser }) 
 
   await test.step("1–3: homepage, account, club", async () => {
     await ada.goto("/");
-    await expect(ada.getByRole("heading", { level: 1 })).toContainText("Good books.");
+    await expect(ada.getByRole("heading", { level: 1 })).toContainText("Good stories.");
     await shot(ada, "01-home");
-    await ada.getByRole("link", { name: "Start a book club" }).first().click();
+    await ada.getByRole("link", { name: "Start a club" }).first().click();
     await ada.waitForURL("**/signup");
     await shot(ada, "02-signup");
     await signUp(ada, "Ada");

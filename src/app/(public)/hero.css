@@ -93,15 +93,17 @@
 @keyframes hero-step-in { from { translate: -2.5% 4%; } to { translate: 0 0; } }
 @keyframes hero-step-back { from { translate: 0 0; } to { translate: 1.5% 3%; } }
 
-.hero-controls { display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem; padding-top: 0.25rem; min-height: 2.75rem; }
+/* With many slides, a narrow phone puts the caption on its own line above the dots. */
+.hero-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0 0.25rem; padding-top: 0.25rem; min-height: 2.75rem; }
 /* Quiet on purpose: it names the book without competing with the headline. */
-.hero-caption { flex: 1; min-width: 0; font-size: 0.875rem; line-height: 1.35; color: var(--color-soft); animation: hero-name 0.9s calc(var(--hero-change, 2.2s) * 0.4) ease-out both; }
+.hero-caption { flex: 1 1 0; min-width: 0; font-size: 0.875rem; line-height: 1.35; color: var(--color-soft); animation: hero-name 0.9s calc(var(--hero-change, 2.2s) * 0.4) ease-out both; }
 .hero-caption cite { display: block; font-family: var(--font-serif); font-style: italic; color: var(--color-ink); }
 @keyframes hero-name { from { opacity: 0; } to { opacity: 1; } }
 /* Already there when the page opens. */
 .hero-art:not(:has([data-state="entering"], [data-state="leaving"])) .hero-caption { animation-duration: 0s; animation-delay: 0s; }
 
 .hero-dot { width: 2rem; height: 2.75rem; display: grid; place-items: center; }
+@media (max-width: 40rem) { .hero-caption { flex-basis: 100%; } .hero-dot { width: 1.75rem; } }
 .hero-dot::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; border: 1px solid var(--color-edge); }
 .hero-dot[aria-current]::before { background: var(--color-rubric); border-color: var(--color-rubric); }
 .hero-pause { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0 0.5rem; font-size: 0.875rem; color: var(--color-soft); }

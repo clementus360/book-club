@@ -1,4 +1,4 @@
-import { BookCheck, ThumbsUp, BookMarked, BookOpen, BookPlus, CalendarDays, Library, MessagesSquare, Quote, Vote } from "lucide-react";
+import { BookCheck, ThumbsUp, BookMarked, BookOpen, BookPlus, CalendarDays, Languages, Library, MessagesSquare, Quote, Vote } from "lucide-react";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { HeroCarousel } from "@/components/hero-carousel";
@@ -6,38 +6,37 @@ import { HERO_SLIDES } from "@/lib/hero";
 import "./hero.css";
 
 const STEPS = [
-  ["Suggest books", "Recommend something you loved whenever it occurs to you. When it is time to choose, each member nominates one book."],
+  ["Suggest something", "Recommend something you loved whenever it occurs to you. When it is time to choose, each member nominates one."],
   ["Choose together", "Everyone puts the nominations in order. The points are added up in the open, and nobody’s vote is ever shown."],
-  ["Read together", "See where the group is, gather questions and passages as you go, and take the time the book needs."],
+  ["Read, watch or play", "See where everyone is, by page, episode or hour. Gather questions and favourite lines as you go, and take the time it needs."],
   ["Meet and discuss", "Set a date and a place, agree who will lead, and write down what was worth keeping."],
 ] as const;
 
 const FEATURES = [
-  ["A shared club library", "Every book your club has suggested, nominated or read, with its story attached."],
-  ["Choosing together", "One nomination each, a private vote, and a tie-break if you need one."],
-  ["Reading progress", "Enough to know where everyone is. No streaks, no leaderboards."],
+  ["A shared club shelf", "Everything your club has suggested, nominated or finished, with its story attached."],
+  ["Words that fit your club", "A book club reads, a film club watches, a game club plays. Every page speaks your club’s language."],
+  ["Progress, in the right units", "Pages, episodes or hours. Enough to know where everyone is. No streaks, no leaderboards."],
   ["Meetings", "The date, the place, the agenda and who is coming, all in one spot."],
-  ["Discussion records", "Questions, notes and quotations, kept beside the book they belong to."],
-  ["A personal library", "Your own shelves, ratings and reviews. Private, and yours whichever clubs you join or leave."],
-  ["Private recommendations", "Recommend a book to one club in particular, sharing only what you choose to."],
-  ["Books you have read", "For every one: what was nominated, how it was decided, and what you made of it."],
+  ["Discussion records", "Questions, notes and quotations, kept beside what they belong to."],
+  ["A private list of your own", "Your books, films, series and games, with ratings and reviews. Yours, whichever clubs you join or leave."],
+  ["Private recommendations", "Recommend something to one club in particular, sharing only what you choose to."],
+  ["Everything you have finished", "For every one: what was nominated, how it was decided, and what you made of it."],
 ] as const;
 
 const STEP_ICONS = [BookPlus, Vote, BookOpen, MessagesSquare];
-const FEATURE_ICONS = [Library, Vote, BookOpen, CalendarDays, Quote, BookMarked, ThumbsUp, BookCheck];
+const FEATURE_ICONS = [Library, Languages, BookOpen, CalendarDays, Quote, BookMarked, ThumbsUp, BookCheck];
 
 export default function Home() {
   return (
     <>
       <section className="grid items-center gap-x-10 gap-y-8 py-10 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)] lg:items-start lg:pt-0 lg:pb-10">
         <div className="lg:pt-24">
-          <h1 className="text-[2.9rem] leading-[1.02] sm:text-6xl lg:text-[4.25rem]">Good books.<br />Better<br className="hidden lg:block" /> conversations.</h1>
+          <h1 className="text-[2.9rem] leading-[1.02] sm:text-6xl lg:text-[4.25rem]">Good stories.<br />Better<br className="hidden lg:block" /> conversations.</h1>
           <p className="mt-6 max-w-md text-lg leading-relaxed text-soft sm:text-xl">
-            Commonplace gives a book club one shared place to choose what to read, read it together, and organise conversations worth having.
+            Commonplace gives your club one shared place to choose what comes next, enjoy it together, and organise conversations worth having. Books, films, TV, anime or games.
           </p>
-          <p className="mt-3 max-w-md text-soft">It works for film, TV, anime and game clubs too.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/signup" className="btn btn-primary">Start a book club</Link>
+            <Link href="/signup" className="btn btn-primary">Start a club</Link>
             <Link href="#how-it-works" className="btn btn-plain">How it works</Link>
           </div>
         </div>
@@ -79,9 +78,9 @@ export default function Home() {
       </section>
 
       <section className="border-t border-rule pt-14 lg:pt-20" aria-labelledby="begin">
-        <h2 id="begin" className="max-w-2xl text-3xl leading-tight sm:text-4xl">Three friends and a book is enough to begin.</h2>
-        <p className="mt-3 max-w-xl text-soft">Clubs are private and by invitation. Read in any language, in any format, at any pace.</p>
-        <Link href="/signup" className="btn btn-primary mt-8">Start a book club</Link>
+        <h2 id="begin" className="max-w-2xl text-3xl leading-tight sm:text-4xl">Three friends and a good story is enough to begin.</h2>
+        <p className="mt-3 max-w-xl text-soft">Clubs are private and by invitation. A book, a film, a series or a game, in any language, at any pace.</p>
+        <Link href="/signup" className="btn btn-primary mt-8">Start a club</Link>
       </section>
     </>
   );

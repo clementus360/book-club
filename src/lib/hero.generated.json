@@ -41,6 +41,54 @@
         1200
       ],
       "characterRatio": 1.15
+    },
+    {
+      "id": "into-the-spider-verse",
+      "background": [
+        760,
+        841
+      ],
+      "character": [
+        640,
+        1200
+      ],
+      "characterRatio": 1.5889
+    },
+    {
+      "id": "arcane",
+      "background": [
+        760,
+        952
+      ],
+      "character": [
+        640,
+        1200
+      ],
+      "characterRatio": 0.6908
+    },
+    {
+      "id": "breaking-bad",
+      "background": [
+        760,
+        953
+      ],
+      "character": [
+        640,
+        1200
+      ],
+      "characterRatio": 0.7855
+    },
+    {
+      "id": "chainsaw-man",
+      "background": [
+        760,
+        953
+      ],
+      "character": [
+        640,
+        1200
+      ],
+      "characterRatio": 1.1325
     }
   ]
 }

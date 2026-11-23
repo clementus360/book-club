@@ -46,6 +46,24 @@ const ADJUST: Record<string, { alt?: string; book?: Partial<HeroSlide["book"]>; 
     alt: "A group of young runners sprint away from the towering, ivy-covered walls of the maze.",
     character: { width: 0.79, x: 0.51, y: 0.262 },
   },
+  "into-the-spider-verse": {
+    book: { title: "Spider-Man: Into the Spider-Verse", author: "An animated film" },
+    alt: "Miles Morales, Gwen Stacy and Peter Parker leap across a bright sky in their Spider-Man suits.",
+    character: { width: 0.8, x: 0.52, y: 0.38 },
+  },
+  arcane: {
+    book: { title: "Arcane", author: "A series by Christian Linke and Alex Yee" },
+    alt: "Jinx, with long blue braids, looks out from a neon-lit city.",
+  },
+  "breaking-bad": {
+    book: { title: "Breaking Bad", author: "A series by Vince Gilligan" },
+    alt: "Walter White sits in a yellow protective suit, staring straight ahead.",
+  },
+  "chainsaw-man": {
+    book: { title: "Chainsaw Man", author: "An anime by MAPPA" },
+    alt: "Denji, with a chainsaw for a head and chainsaws for arms, leaps forward.",
+    character: { width: 0.76, x: 0.51 },
+  },
 };
 
 export const STAGE = { ratio: generated.stageRatio, rise: generated.rise as [number, number] };
