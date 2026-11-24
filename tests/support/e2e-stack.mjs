@@ -16,7 +16,7 @@ const env = {
   GOOGLE_AUTH: "1", SITE_URL: `http://localhost:${APP}`,
   RESEND_API_KEY: "re_test", EMAIL_FROM: "Commonplace <club@mail.example.test>", RESEND_API_URL: `${emulator.url}/stub/resend`,
   ...(live ? {} : {
-    OPEN_LIBRARY_URL: emulator.url + "/stub/ol", GOOGLE_BOOKS_URL: emulator.url + "/stub/gb",
+    OPEN_LIBRARY_URL: emulator.url + "/stub/ol", GOOGLE_BOOKS_URL: emulator.url + "/stub/gb", INTERNET_ARCHIVE_URL: emulator.url + "/stub/ia",
     TMDB_API_KEY: "tmdb-test", TMDB_URL: emulator.url + "/stub/tmdb", TVMAZE_URL: emulator.url + "/stub/tvmaze", ANILIST_URL: emulator.url + "/stub/anilist",
     TWITCH_CLIENT_ID: "twitch-test", TWITCH_CLIENT_SECRET: "twitch-secret", TWITCH_TOKEN_URL: emulator.url + "/stub/twitch/token", IGDB_URL: emulator.url + "/stub/igdb",
   }),

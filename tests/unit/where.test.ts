@@ -35,11 +35,11 @@ describe("where to get a book", () => {
     const asked: string[] = [];
     vi.stubGlobal("fetch", (url: URL) => {
       asked.push(String(url));
-      return String(url).includes("openlibrary")
-        ? answer({ docs: [{ key: "/works/OL2W", ebook_access: "public", lending_edition_s: "OL9M" }] })
+      return String(url).includes("archive.org")
+        ? answer({ response: { docs: [{ identifier: "kindred00", lending___status: "is_readable", openlibrary_edition: ["OL9M"] }] } })
         : answer({ saleInfo: { saleability: "FREE", buyLink: "https://play.google.com/store/books/details?id=g" } });
     });
-    const ways = await waysToGet(book({ open_library_work_id: "OL2W", google_books_id: "abc123" }), "RW");
+    const ways = await waysToGet({ ...book({ open_library_work_id: "OL2W", google_books_id: "abc123" }), publication_year: 1899 }, "RW");
     expect(ways.map((w) => w.label)).toEqual(["Read it free", "Find it in a library", "Look for it on Amazon", "Look for it on AbeBooks"]);
     expect(ways[0]?.href).toBe("https://openlibrary.org/books/OL9M");
     expect(asked).toHaveLength(2);
@@ -49,15 +49,34 @@ describe("where to get a book", () => {
     expect(google.searchParams.get("key")).toBe("k");
   });
 
-  it("offers borrowing, ignores copies only for print-disabled readers, and survives outages", async () => {
-    vi.stubGlobal("fetch", (url: URL) => String(url).includes("openlibrary")
-      ? answer({ docs: [{ key: "/works/OL1W", ebook_access: "borrowable" }] })
-      : answer({}, 503));
-    const ways = await waysToGet(book({ isbn_13: "9780441478125" }), null);
-    expect(ways[0]).toMatchObject({ kind: "borrow", href: "https://openlibrary.org/works/OL1W" });
+  it("asks the Internet Archive by work, or else by ISBN", async () => {
+    const asked: URL[] = [];
+    vi.stubGlobal("fetch", (url: URL) => { asked.push(new URL(url)); return answer({ response: { docs: [] } }); });
+    await waysToGet(book({ open_library_work_id: "OL893414W", isbn_13: "9780441172719" }), null);
+    await waysToGet(book({ isbn_13: "9780441172719" }), null);
+    const queries = asked.filter((u) => u.hostname === "archive.org").map((u) => u.searchParams.get("q"));
+    expect(queries).toEqual(["openlibrary_work:OL893414W", "isbn:9780441172719"]);
+  });
 
-    vi.stubGlobal("fetch", () => answer({ docs: [{ key: "/works/OL1W", ebook_access: "printdisabled" }] }));
-    expect((await waysToGet(book({ isbn_13: "9780441478125" }), null)).map((w) => w.kind)).toEqual(["library", "buy", "buy"]);
+  it("offers borrowing in the book's language, now before after a wait, and ignores copies only for print-disabled readers", async () => {
+    const items = [
+      { identifier: "diuna0000herb", lending___status: ["is_lendable", "is_printdisabled"], openlibrary_edition: ["OL9039841M"], language: ["pol"] },
+      { identifier: "dune0000herb", lending___status: ["is_lendable", "is_borrowable", "is_printdisabled"], openlibrary_edition: ["OL10630547M"], language: ["eng"] },
+      { identifier: "dune00only", lending___status: "is_printdisabled", openlibrary_edition: ["OL1M"], language: ["eng"] },
+      { identifier: "upload2012", lending___status: "is_readable", openlibrary_edition: ["OL2M"], language: ["spa"] },
+    ];
+    vi.stubGlobal("fetch", (url: URL) => String(url).includes("archive.org") ? answer({ response: { docs: items } }) : answer({}, 503));
+    const dune = { ...book({ isbn_13: "9780441172719" }), language: "en", publication_year: 1965 };
+    const ways = await waysToGet(dune, null);
+    // An open copy of a recent book is someone's upload, not a free book.
+    expect(ways.map((w) => w.kind)).toEqual(["borrow", "library", "buy", "buy"]);
+    expect(ways[0]).toMatchObject({ href: "https://openlibrary.org/books/OL10630547M", note: "Open Library, free account needed" });
+
+    vi.stubGlobal("fetch", () => answer({ response: { docs: [items[0]] } }));
+    expect((await waysToGet(dune, null))[0]).toMatchObject({ href: "https://openlibrary.org/books/OL9039841M", note: "Open Library, free account needed. There may be a wait" });
+
+    vi.stubGlobal("fetch", () => answer({ response: { docs: [items[2]] } }));
+    expect((await waysToGet(dune, null)).map((w) => w.kind)).toEqual(["library", "buy", "buy"]);
 
     vi.stubGlobal("fetch", () => Promise.reject(new TypeError("offline")));
     expect(await waysToGet(book({ isbn_13: "9780441478125", google_books_id: "abc123" }), null)).toHaveLength(3);

@@ -11,41 +11,77 @@ export type Way = { kind: "free" | "borrow" | "stream" | "library" | "buy"; labe
 type Book = {
   title: string; authors: string[]; isbn_13: string | null; isbn_10: string | null;
   open_library_work_id: string | null; open_library_edition_id: string | null; google_books_id: string | null;
-  kind?: Kind; metadata_source?: string; external_id?: string | null; platforms?: string[];
+  kind?: Kind; metadata_source?: string; external_id?: string | null; platforms?: string[]; language?: string | null; publication_year?: number | null;
 };
 
-const ol = () => process.env.OPEN_LIBRARY_URL ?? "https://openlibrary.org";
 const gb = () => process.env.GOOGLE_BOOKS_URL ?? "https://www.googleapis.com";
 const DAY = 86_400;
 
-async function get(url: URL | string): Promise<unknown> {
+/** JSON, or null. A failure only means a line is left out, but it is logged so it can be noticed. */
+async function get(url: URL, timeout = 4000): Promise<unknown> {
   try {
-    const res = await fetch(url, { headers: { "User-Agent": "Commonplace/1.0 (private book clubs)" }, signal: AbortSignal.timeout(4000), next: { revalidate: DAY } });
+    const res = await fetch(url, { headers: { "User-Agent": "Commonplace/1.0 (private book clubs)" }, signal: AbortSignal.timeout(timeout), next: { revalidate: DAY } });
+    if (!res.ok) console.warn(`[commonplace] ${url.hostname} responded ${res.status}`);
     return res.ok ? await res.json() : null;
-  } catch {
+  } catch (error) {
+    console.warn(`[commonplace] ${url.hostname}:`, error instanceof Error ? error.message : error);
     return null;
   }
 }
 
 const OL_ID = /^OL\d+[MW]$/;
 
-/** Open Library says whether the Internet Archive has a copy to read or lend. */
+const ia = () => process.env.INTERNET_ARCHIVE_URL ?? "https://archive.org";
+
+type Item = { identifier?: string; openlibrary_edition?: string[] | string; language?: string[] | string; lending___status?: string[] | string; "access-restricted-item"?: string | boolean };
+const list = (v: string[] | string | undefined) => (Array.isArray(v) ? v : v ? [v] : []);
+
+/** True if an Internet Archive language value names the book's language ("eng", "English", "en"). */
+function sameLanguage(values: string[], code: string | null): boolean {
+  if (!code) return false;
+  let name = "";
+  try { name = new Intl.DisplayNames(["en"], { type: "language" }).of(code)?.toLowerCase() ?? ""; } catch { /* unknown code */ }
+  return values.some((v) => { const l = v.toLowerCase(); return l === code || l === name || (name.length >= 3 && l === name.slice(0, 3)); });
+}
+
+/**
+ * Whether the Internet Archive, which does Open Library's lending, has a copy
+ * anyone can borrow or read. Asked of the Archive's own search, which answers in
+ * a second or two; Open Library's search can take most of a minute.
+ */
 export async function openLibraryWays(book: Book): Promise<Way[]> {
   const isbn = book.isbn_13 ?? book.isbn_10;
-  const url = new URL(`${ol()}/search.json`);
-  if (book.open_library_work_id && OL_ID.test(book.open_library_work_id)) url.searchParams.set("q", `key:/works/${book.open_library_work_id}`);
-  else if (isbn) url.searchParams.set("isbn", isbn);
-  else return [];
-  url.searchParams.set("fields", "key,ebook_access,lending_edition_s");
-  url.searchParams.set("limit", "1");
-  const doc = ((await get(url)) as { docs?: { key?: string; ebook_access?: string; lending_edition_s?: string }[] } | null)?.docs?.[0];
-  if (!doc) return [];
-  const edition = doc.lending_edition_s && OL_ID.test(doc.lending_edition_s) ? doc.lending_edition_s : null;
-  const work = doc.key?.match(/^\/works\/(OL\d+W)$/)?.[1];
-  const page = edition ? `https://openlibrary.org/books/${edition}` : work ? `https://openlibrary.org/works/${work}` : null;
-  if (!page) return [];
-  if (doc.ebook_access === "public") return [{ kind: "free", label: "Read it free", note: "Open Library, out of copyright", href: page }];
-  if (doc.ebook_access === "borrowable") return [{ kind: "borrow", label: "Borrow the e-book", note: "Open Library, free account needed", href: page }];
+  const work = book.open_library_work_id && OL_ID.test(book.open_library_work_id) ? book.open_library_work_id : null;
+  if (!work && !isbn) return [];
+  const url = new URL(`${ia()}/advancedsearch.php`);
+  url.searchParams.set("q", work ? `openlibrary_work:${work}` : `isbn:${isbn}`);
+  for (const f of ["identifier", "openlibrary_edition", "language", "lending___status", "access-restricted-item"]) url.searchParams.append("fl[]", f);
+  url.searchParams.set("rows", "50");
+  url.searchParams.set("output", "json");
+  const docs = ((await get(url, 6000)) as { response?: { docs?: Item[] } } | null)?.response?.docs ?? [];
+
+  // The Archive says of each copy whether it can be borrowed now, borrowed after a wait, or only read by print-disabled people.
+  const status = (d: Item) => list(d.lending___status);
+  const now = docs.filter((d) => status(d).includes("is_borrowable"));
+  const later = docs.filter((d) => status(d).includes("is_lendable") && !status(d).includes("is_borrowable"));
+  // Open copies count as free only for books old enough to be out of copyright: anyone can upload a recent one.
+  const old = book.publication_year != null && book.publication_year < 1930;
+  const open = old ? docs.filter((d) => status(d).includes("is_readable") && String(d["access-restricted-item"]) !== "true") : [];
+  // The edition people chose, then one in its language, then any.
+  const best = (items: Item[]) =>
+    items.find((d) => book.open_library_edition_id && list(d.openlibrary_edition).includes(book.open_library_edition_id))
+    ?? items.find((d) => sameLanguage(list(d.language), book.language ?? null)) ?? items[0];
+  const pageFor = (d: Item) => {
+    const edition = list(d.openlibrary_edition).find((e) => OL_ID.test(e));
+    if (edition) return `https://openlibrary.org/books/${edition}`;
+    return d.identifier && /^[\w.-]+$/.test(d.identifier) ? `https://archive.org/details/${d.identifier}` : null;
+  };
+  const free = open.length ? pageFor(best(open)!) : null;
+  if (free) return [{ kind: "free", label: "Read it free", note: "Open Library, out of copyright", href: free }];
+  const ready = now.length ? pageFor(best(now)!) : null;
+  if (ready) return [{ kind: "borrow", label: "Borrow the e-book", note: "Open Library, free account needed", href: ready }];
+  const queue = later.length ? pageFor(best(later)!) : null;
+  if (queue) return [{ kind: "borrow", label: "Borrow the e-book", note: "Open Library, free account needed. There may be a wait", href: queue }];
   return [];
 }
 

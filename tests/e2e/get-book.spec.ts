@@ -23,6 +23,7 @@ test("a book page says where to read, borrow or buy it", async ({ browser }) => 
   await page.screenshot({ path: "test-results/get-this-book.png", fullPage: true });
 
   await addToMyLibrary(page, "kindred", "Kindred");
-  await expect(page.locator("#get").getByRole("link", { name: /Read it free/ })).toHaveAttribute("href", "https://openlibrary.org/works/OL2W");
+  await expect(page.locator("#get").getByRole("link", { name: /Borrow the e-book/ })).toHaveAttribute("href", "https://openlibrary.org/books/OL6M");
+  await expect(page.locator("#get").getByText("Open Library, free account needed. There may be a wait")).toBeVisible();
   expect(problems).toEqual([]);
 });
