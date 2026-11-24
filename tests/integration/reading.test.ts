@@ -219,12 +219,26 @@ describe("email", () => {
     await h.sql("update private.email_outbox set created_at = now() - interval '3 days' where failed_at is null");
     expect(await claim()).toEqual([]); // too old to be useful
   });
+  it("hands back, uncounted, what the email service would not take yet", async () => {
+    const { admin, club } = await readingClub();
+    await h.sql("delete from private.email_outbox");
+    await meeting(admin, club);
+    const claim = async () => ((await h.as("service", "select claim_emails(10) c"))[0]!.c as { id: string }[]).map((x) => x.id);
+    for (let i = 0; i < 8; i++) {
+      const ids = await claim();
+      expect(ids).toHaveLength(1); // straight back, however often
+      await h.as("service", "select release_emails($1)", [ids]);
+    }
+    expect(await h.sql("select attempts, claimed_at, failed_at from private.email_outbox")).toEqual([{ attempts: 0, claimed_at: null, failed_at: null }]);
+    await expect(h.as(admin, "select release_emails('{}')")).rejects.toThrow(/permission denied/);
+  });
   it("checks the secret it is called with", async () => {
     const [secret] = (await h.sql("select value from private.settings where key = 'email_secret'")).map((r) => r.value as string);
     expect(secret).toMatch(/^[0-9a-f]{64}$/);
     expect((await h.as("service", "select check_email_secret($1) ok", [secret]))[0]!.ok).toBe(true);
     for (const wrong of ["", "x", secret!.toUpperCase(), `${secret}0`]) expect((await h.as("service", "select check_email_secret($1) ok", [wrong]))[0]!.ok).toBe(false);
     await expect(h.sql("select private.set_app_url('https://books.example.com/')")).rejects.toThrow(/without a path/);
+    await expect(h.sql("select private.set_app_url('http://books.example.com')")).rejects.toThrow(/https/);
     await h.sql("select private.set_app_url('https://books.example.com')");
   });
 });

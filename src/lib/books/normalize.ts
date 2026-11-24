@@ -1,4 +1,5 @@
 import type { BookFormat } from "./types";
+import { isCoverHost } from "@/lib/images";
 
 /** For comparing, never for display. Keeps every script; drops case, width and punctuation. */
 export function fold(text: string): string {
@@ -126,7 +127,6 @@ export function plainText(html: string | null | undefined): string | null {
   return text ? text.slice(0, 10_000) : null;
 }
 
-const COVER_HOSTS = /^(covers\.openlibrary\.org|books\.google\.com|books\.googleusercontent\.com|lh\d\.googleusercontent\.com|image\.tmdb\.org|static\.tvmaze\.com|s\d\.anilist\.co|images\.igdb\.com|media\.rawg\.io)$/;
 
 /** https only, and only from the providers' own image hosts. */
 export function trustedCover(url: string | null | undefined): string | null {
@@ -134,7 +134,7 @@ export function trustedCover(url: string | null | undefined): string | null {
   try {
     const u = new URL(url);
     if (u.protocol === "http:") u.protocol = "https:";
-    if (u.protocol !== "https:" || !COVER_HOSTS.test(u.hostname)) return null;
+    if (u.protocol !== "https:" || !isCoverHost(u.hostname)) return null;
     u.searchParams.delete("edge");
     return u.toString();
   } catch {

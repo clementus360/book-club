@@ -2,7 +2,7 @@ import "server-only";
 import { asIsbn, inferFormat, normalizeLanguage, parseVolume, pickIsbns, plainText, trustedCover, yearOf } from "./normalize";
 import type { BookRecord } from "./types";
 
-const base = () => process.env.GOOGLE_BOOKS_URL ?? "https://www.googleapis.com";
+const base = () => process.env.GOOGLE_BOOKS_URL || "https://www.googleapis.com";
 
 export type GoogleVolume = {
   id?: string;

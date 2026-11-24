@@ -1,5 +1,6 @@
 import { formatDateTime, zoneLabel } from "@/lib/dates";
 import { isKind, words } from "@/lib/kinds";
+import { BRAND } from "@/lib/brand";
 
 /** What claim_emails() hands out for each email. */
 export type EmailItem = {
@@ -53,19 +54,22 @@ export function compose(item: EmailItem, site: string, stopUrl: string): Email |
   const club = oneLine(item.club);
   const subject = `${club}: ${oneLine(title)}`;
   const link = `${site}/app/go?${new URLSearchParams({ club: item.club_id, to: path })}`;
-  const foot = `You are getting this because you are in ${club} on Commonplace. To stop these emails: ${stopUrl}`;
+  const foot = `You are getting this because you are in ${club} on ${BRAND.name}. To stop these emails: ${stopUrl}`;
 
   const text = [`Hello ${oneLine(item.name)},`, "", ...lines, "", `${label}: ${link}`, "", "—", foot, ""].join("\n");
-  const html = `<!doctype html><html><body style="margin:0;background:#f1eee6;padding:24px 12px;font-family:Georgia,'Times New Roman',serif;color:#211f1b">
+  // In the brand's colours. Email clients rarely load web fonts, so Poppins falls back to the system's sans.
+  const k = BRAND.colors;
+  const sans = "Poppins,Helvetica,Arial,sans-serif";
+  const html = `<!doctype html><html><body style="margin:0;background:${k.paper};padding:24px 12px;font-family:${sans};color:${k.ink}">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#faf8f2;border:1px solid #d8d2c3">
-<tr><td style="padding:28px 28px 8px"><p style="margin:0 0 6px;font-style:italic;color:#8f2d1d;font-size:15px">${esc(club)}</p>
-<h1 style="margin:0 0 16px;font-size:26px;line-height:1.2;font-weight:normal">${esc(title)}</h1>
-<p style="margin:0 0 12px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55">Hello ${esc(oneLine(item.name))},</p>
-${lines.map((l) => `<p style="margin:0 0 12px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55">${esc(l)}</p>`).join("\n")}
-<p style="margin:22px 0 26px"><a href="${esc(link)}" style="display:inline-block;background:#1e4a3c;color:#faf8f2;text-decoration:none;padding:11px 18px;border-radius:3px;font-family:Helvetica,Arial,sans-serif;font-size:15px;font-weight:bold">${esc(label)}</a></p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:${k.sheet};border:1px solid ${k.rule};border-top:4px solid ${k.flame};border-radius:8px">
+<tr><td style="padding:28px 28px 8px"><p style="margin:0 0 8px;color:${k.rubric};font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase">${esc(club)}</p>
+<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;font-weight:bold">${esc(title)}</h1>
+<p style="margin:0 0 12px;font-size:15px;line-height:1.6">Hello ${esc(oneLine(item.name))},</p>
+${lines.map((l) => `<p style="margin:0 0 12px;font-size:15px;line-height:1.6">${esc(l)}</p>`).join("\n")}
+<p style="margin:22px 0 26px"><a href="${esc(link)}" style="display:inline-block;background:${k.leaf};color:${k.sheet};text-decoration:none;padding:11px 18px;border-radius:8px;font-size:15px;font-weight:bold">${esc(label)}</a></p>
 </td></tr>
-<tr><td style="padding:16px 28px 24px;border-top:1px solid #d8d2c3;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#5b564c">You are getting this because you are in ${esc(club)} on Commonplace. <a href="${esc(stopUrl)}" style="color:#5b564c">Stop these emails</a>.</td></tr>
+<tr><td style="padding:16px 28px 24px;border-top:1px solid ${k.rule};font-size:12px;line-height:1.5;color:${k.soft}">You are getting this because you are in ${esc(club)} on ${esc(BRAND.name)}. <a href="${esc(stopUrl)}" style="color:${k.soft}">Stop these emails</a>.</td></tr>
 </table></td></tr></table></body></html>`;
   return { subject, text, html };
 }

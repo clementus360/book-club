@@ -23,17 +23,22 @@ const schema = z.object({
 const sign = (body: string) =>
   createHmac("sha256", createHmac("sha256", secretKey()).update("commonplace:book-token").digest()).update(body).digest();
 
-export function signRecord(record: BookRecord): string {
-  const body = Buffer.from(JSON.stringify(record)).toString("base64url");
+/** How long a search result can be chosen. Long enough to read the list, short enough that it cannot be replayed for ever. */
+export const TOKEN_LIFETIME_MS = 6 * 60 * 60 * 1000;
+
+export function signRecord(record: BookRecord, now = Date.now()): string {
+  const body = Buffer.from(JSON.stringify({ ...record, issued_at: now })).toString("base64url");
   return `${body}.${sign(body).toString("base64url")}`;
 }
 
-export function readToken(token: string): BookRecord | null {
+export function readToken(token: string, now = Date.now()): BookRecord | null {
   const [body, mac] = token.split(".");
   if (!body || !mac || token.length > 40_000) return null;
   const given = Buffer.from(mac, "base64url");
   const expected = sign(body);
   if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
-  const parsed = schema.safeParse(JSON.parse(Buffer.from(body, "base64url").toString("utf8")));
-  return parsed.success ? (parsed.data as BookRecord) : null;
+  const parsed = schema.extend({ issued_at: z.number().int() }).safeParse(JSON.parse(Buffer.from(body, "base64url").toString("utf8")));
+  if (!parsed.success || now - parsed.data.issued_at > TOKEN_LIFETIME_MS || parsed.data.issued_at > now + 60_000) return null;
+  const { issued_at: _issued, ...record } = parsed.data; // eslint-disable-line @typescript-eslint/no-unused-vars
+  return record as BookRecord;
 }

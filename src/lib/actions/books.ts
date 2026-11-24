@@ -43,6 +43,8 @@ export async function resolveSearchResult(token: string, separate: boolean): Pro
   const { supabase } = await requireUser();
   const record = typeof token === "string" ? readToken(token) : null;
   if (!record) return { status: "error", message: "That search result has expired. Please search again." };
+  const { data: allowed } = await supabase.rpc("consume_import_quota");
+  if (!allowed) return { status: "error", message: "You have added a lot in the last hour. Please try again later." };
 
   if (!separate) {
     const { data: similar, error } = await supabase.rpc("find_similar_books", { p_book: record });

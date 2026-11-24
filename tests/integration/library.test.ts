@@ -119,6 +119,28 @@ describe("catalogue", () => {
     await h.rpc(a, "update_manual_book", { p_book_id: book, p_book: { title: "A Family Memoir, revised", authors: [] } });
     expect((await h.as(b, "select title from books where id = $1", [book]))[0]!.title).toContain("revised");
   });
+  it("stops a manual entry being rewritten once a club has voted on it", async () => {
+    const [a, b] = [await h.user(), await h.user()];
+    const club = await h.club(a);
+    await h.join(a, club, b);
+    const mine = await h.manualBook(a, "Before the Vote");
+    const cycle = await h.cycle(a, club);
+    await h.rpc(a, "nominate", { p_cycle_id: cycle, p_book_id: mine });
+    await h.rpc(b, "nominate", { p_cycle_id: cycle, p_book_id: await h.importBook("The Other One") });
+    await h.rpc(a, "update_manual_book", { p_book_id: mine, p_book: { title: "Still Nominating", authors: [] } }); // nothing decided yet
+    expect(await h.rpc(a, "can_edit_book", { p_book_id: mine })).toBe(true);
+    await h.rpc(a, "open_voting_now", { p_cycle_id: cycle });
+    await expect(h.rpc(a, "update_manual_book", { p_book_id: mine, p_book: { title: "Something Else", authors: [] } })).rejects.toThrow(/already voted on or chosen/);
+    expect(await h.rpc(a, "can_edit_book", { p_book_id: mine })).toBe(false);
+    expect((await h.sql("select title from books where id = $1", [mine]))[0]!.title).toBe("Still Nominating");
+    await expect(h.rpc(a, "update_manual_book_fields", { p_book_id: mine, p_book: { title: "x" } })).rejects.toThrow(/does not exist|permission denied/);
+  });
+  it("limits how many search results one person can add", async () => {
+    const a = await h.user();
+    for (let i = 0; i < 60; i++) expect(await h.rpc(a, "consume_import_quota")).toBe(true);
+    expect(await h.rpc(a, "consume_import_quota")).toBe(false);
+    await expect(h.rpc(null, "consume_import_quota")).rejects.toThrow(/permission denied/);
+  });
   it("rejects malformed manual entries", async () => {
     const a = await h.user();
     await expect(h.rpc(a, "create_manual_book", { p_book: { title: "  " } })).rejects.toThrow(/needs a title/);

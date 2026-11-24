@@ -17,4 +17,6 @@ minimum_password_length = 8
 
 [auth.email]
 enable_signup = true
-enable_confirmations = false
+# Accounts must prove they own their address. Without this, anyone could sign up
+# as someone else and have Commonplace email them.
+enable_confirmations = true

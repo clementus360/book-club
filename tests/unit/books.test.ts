@@ -114,6 +114,9 @@ describe("signed results", () => {
     const forged = `${Buffer.from(JSON.stringify(book({ title: "Forged" }))).toString("base64url")}.${token.split(".")[1]}`;
     expect(readToken(forged)).toBeNull();
     expect(readToken("nonsense")).toBeNull();
+    const old = signRecord(book({ title: "Kindred" }), Date.now() - 7 * 60 * 60 * 1000);
+    expect(readToken(old)).toBeNull(); // too old to choose
+    expect(readToken(token)).not.toHaveProperty("issued_at");
   });
 });
 

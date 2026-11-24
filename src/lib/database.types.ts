@@ -1092,6 +1092,7 @@ export type Database = {
       close_voting_now: { Args: { p_cycle_id: string }; Returns: undefined };
       complete_cycle: { Args: { p_cycle_id: string }; Returns: undefined };
       confirm_sole_nomination: { Args: { p_cycle_id: string }; Returns: undefined };
+      consume_import_quota: { Args: Record<PropertyKey, never>; Returns: boolean };
       consume_search_quota: { Args: Record<PropertyKey, never>; Returns: boolean };
       create_club: { Args: { p_name: string | null; p_description?: string | null; p_timezone?: string | null; p_kind?: Database["public"]["Enums"]["club_kind"] }; Returns: string };
       create_cycle: { Args: { p_club_id: string; p_nomination_opens_at: string | null; p_nomination_closes_at: string | null; p_voting_opens_at: string | null; p_voting_closes_at: string | null; p_reading_starts_at: string | null; p_reading_ends_at: string | null }; Returns: string };
@@ -1109,6 +1110,7 @@ export type Database = {
       preview_invitation: { Args: { p_token: string | null }; Returns: Json };
       recommend_book: { Args: { p_club_id: string; p_book_id: string; p_text?: string | null; p_share_rating?: boolean; p_shared_review?: string | null }; Returns: string };
       record_meeting_outcomes: { Args: { p_meeting_id: string; p_outcomes: string | null; p_completed?: boolean }; Returns: undefined };
+      release_emails: { Args: { p_ids: string[] }; Returns: undefined };
       remove_club_book: { Args: { p_club_id: string; p_book_id: string }; Returns: undefined };
       remove_member: { Args: { p_club_id: string; p_user_id: string }; Returns: undefined };
       reopen_cycle: { Args: { p_cycle_id: string }; Returns: undefined };

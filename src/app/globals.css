@@ -1,24 +1,58 @@
 @import "tailwindcss";
 
+/* Two looks share one set of names. The default is the CommonPlace brand
+   (Branding/CommonPlace.pdf): cream, navy and orange, with Poppins for text
+   and Literata, the serif, for titles. The
+   earlier look, serif on warm paper, is kept as "classic" (src/lib/theme.ts). */
 @theme {
+  --color-paper: #e9e6dc;
+  --color-sheet: #f6f5f0;
+  --color-ink: #072935;
+  --color-soft: #4f5f66;
+  --color-rule: #d4d1c4;
+  --color-edge: #7b878b; /* control outlines: 3:1 on sheet */
+  --color-leaf: #072935; /* actions and links */
+  --color-leaf-deep: #021821;
+  --color-leaf-wash: #dde5e6;
+  --color-rubric: #b83516; /* orange, dark enough to read */
+  --color-rubric-wash: #fbe3da;
+  --color-flame: #f24d28; /* the logo's orange: marks and rules, never small text */
+
+  --font-sans: var(--font-poppins), system-ui, "PingFang SC", "Hiragino Sans", "Apple SD Gothic Neo", "Noto Sans CJK SC", sans-serif;
+  --font-serif: var(--font-literata), Georgia, "Songti SC", "Hiragino Mincho ProN", "Nanum Myeongjo", "Noto Serif CJK SC", serif;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+:root {
+  --logo-accent: var(--color-flame);
+  --logo-ink: var(--color-ink);
+  --selection: #fbd5c8;
+}
+
+[data-theme="classic"] {
   --color-paper: #f1eee6;
   --color-sheet: #faf8f2;
   --color-ink: #211f1b;
   --color-soft: #5b564c;
   --color-rule: #d8d2c3;
-  --color-edge: #8d8575; /* control outlines: 3:1 on sheet */
+  --color-edge: #8d8575;
   --color-leaf: #1e4a3c;
   --color-leaf-deep: #14362c;
   --color-leaf-wash: #e0e6da;
   --color-rubric: #8f2d1d;
   --color-rubric-wash: #f2e1d8;
-
+  --color-flame: #8f2d1d;
   --font-sans: var(--font-hanken), system-ui, "PingFang SC", "Hiragino Sans", "Apple SD Gothic Neo", "Noto Sans CJK SC", sans-serif;
   --font-serif: var(--font-literata), Georgia, "Songti SC", "Hiragino Mincho ProN", "Nanum Myeongjo", "Noto Serif CJK SC", serif;
-
   --radius-sm: 2px;
   --radius-md: 3px;
+  --selection: #cfdccb;
 }
+
+/* Only in one look or the other, such as the logo and the old wordmark. */
+[data-theme="classic"] .brand-only, :root:not([data-theme="classic"]) .classic-only { display: none !important; }
 
 @layer base {
   html { color-scheme: light; -webkit-text-size-adjust: 100%; }
@@ -28,7 +62,7 @@
   p { text-wrap: pretty; }
   :focus-visible { outline: 2px solid var(--color-leaf); outline-offset: 2px; border-radius: 2px; }
   button:not(:disabled), summary, select { cursor: pointer; }
-  ::selection { background: #cfdccb; }
+  ::selection { background: var(--selection); }
   @media (prefers-reduced-motion: reduce) {
     *, ::before, ::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   }
@@ -46,8 +80,15 @@
   .btn-text.danger { @apply text-rubric decoration-rubric/35 hover:decoration-rubric; }
 
   .link { @apply text-leaf underline decoration-leaf/35 underline-offset-[3px] hover:decoration-leaf; }
-  /* Rubrication: the red-ink headings of manuscript books. */
-  .rubric { @apply font-serif text-[0.9375rem] italic text-rubric; }
+  /* Brand: links and text buttons are underlined in the logo's orange. */
+  :root:not([data-theme="classic"]) :is(.link, .btn-text:not(.danger)) { text-decoration-color: color-mix(in srgb, var(--color-flame) 70%, transparent); }
+  :root:not([data-theme="classic"]) :is(.link, .btn-text:not(.danger)):hover { text-decoration-color: var(--color-flame); }
+  /* Words picked out in the brand's orange, as in the logo. Plain in the classic look. */
+  :root:not([data-theme="classic"]) .brand-accent { color: var(--color-rubric); }
+  /* Small labels above titles. Classic: rubrication, the red-ink headings of
+     manuscript books. Brand: short orange capitals. */
+  .rubric { @apply font-sans text-[0.75rem] font-semibold tracking-[0.09em] uppercase text-rubric; }
+  [data-theme="classic"] .rubric { @apply font-serif text-[0.9375rem] font-normal tracking-normal normal-case italic; }
   .meta { @apply text-sm text-soft; }
   .with-icon { @apply inline-flex items-center gap-1.5; }
 
@@ -94,7 +135,7 @@
   .written { @apply font-serif text-[1.0313rem] leading-[1.7] whitespace-pre-line break-words; }
 
   dialog.sheet {
-    @apply m-auto w-[min(34rem,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-y-auto border border-rule bg-sheet p-6 text-ink shadow-[0_12px_48px_rgb(33_31_27/0.18)] sm:p-8;
+    @apply m-auto w-[min(34rem,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-y-auto border border-rule bg-sheet p-6 text-ink shadow-[0_12px_48px_color-mix(in_srgb,var(--color-ink)_18%,transparent)] sm:p-8;
   }
-  dialog.sheet::backdrop { background: rgb(33 31 27 / 0.42); }
+  dialog.sheet::backdrop { background: color-mix(in srgb, var(--color-ink) 42%, transparent); }
 }

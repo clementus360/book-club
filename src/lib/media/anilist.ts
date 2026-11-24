@@ -6,7 +6,7 @@ import { blank, count, getJson } from "./common";
 // Anime, from AniList. No key. Free unless the app earns more than $150 a
 // month; past that AniList asks for a commercial licence.
 
-const base = () => process.env.ANILIST_URL ?? "https://graphql.anilist.co";
+const base = () => process.env.ANILIST_URL || "https://graphql.anilist.co";
 
 type Media = {
   id?: number; title?: { romaji?: string | null; english?: string | null; native?: string | null }; synonyms?: string[];

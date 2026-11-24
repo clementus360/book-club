@@ -14,6 +14,7 @@ import { dayRange, fromNow } from "@/lib/dates";
 import { describeEvent } from "@/lib/events";
 import { words } from "@/lib/kinds";
 import { must, requireClub } from "@/lib/viewer";
+import { imageSrc } from "@/lib/images";
 
 export const metadata: Metadata = { title: "Home" };
 
@@ -37,7 +38,7 @@ export default async function Home() {
       <PageHeader kicker="Your club" title={club.name}>{club.description}</PageHeader>
       {club.image_url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={club.image_url} alt="" referrerPolicy="no-referrer" className="block-gap max-h-48 max-w-full object-cover" />
+        <img src={imageSrc(club.image_url) ?? undefined} alt="" referrerPolicy="no-referrer" className="block-gap max-h-48 max-w-full object-cover" />
       )}
       <NextStepBox step={guide.step} />
       <Steps current={guide.current} kind={club.kind} />

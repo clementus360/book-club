@@ -5,7 +5,7 @@ import { blank, getJson, languageFromName, yearFrom } from "./common";
 
 // TV series, from TVmaze. No key. Data is CC BY-SA: credit TVmaze where it is shown.
 
-const base = () => process.env.TVMAZE_URL ?? "https://api.tvmaze.com";
+const base = () => process.env.TVMAZE_URL || "https://api.tvmaze.com";
 
 type Show = {
   id?: number; name?: string; premiered?: string | null; language?: string | null; summary?: string | null;

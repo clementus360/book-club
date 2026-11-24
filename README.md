@@ -46,8 +46,15 @@ All of these are read on the server only, so none needs a `NEXT_PUBLIC_` prefix.
 2. **Email templates** (recommended): the default links only work in the browser that asked for them. These work anywhere:
    - Confirm signup: `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email`
    - Reset password: `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery`
+   - Change email address: `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email_change`. Keep **Secure email change** on, so both addresses must confirm.
 3. **SMTP**: configure your own sender. Supabase's built-in one is limited to a few messages an hour.
 4. **Password length**: 8 or more, to match the app.
+5. **Confirm email**: on (Authentication > Sign In / Providers > Email). Without it anyone can sign up with someone else's address and Commonplace will email them.
+6. **Secure password change**: on, so changing a password needs a recent sign-in. The app already handles the prompt.
+
+### Who runs it
+
+`src/lib/legal.ts` names the operator, their country and law, the minimum age and where data is stored. The privacy page and terms read from it, so change it if you run your own copy.
 
 ### Sign in with Google (optional)
 
@@ -59,10 +66,22 @@ All of these are read on the server only, so none needs a `NEXT_PUBLIC_` prefix.
 
 Import the repository, set the variables above for Production (and Preview if you use it), and deploy. No cron jobs are needed. Run `npx supabase db push --remote` whenever migrations change.
 
+Then, once, tell the database where the app is, so it can ask it to send email. In the Supabase SQL editor:
+
+```sql
+select private.set_app_url('https://your-domain');
+```
+
+It must be `https://`, with no trailing slash. Until this is done, no email is sent (deadlines are still kept). Run it again if the domain changes.
+
+**Resend's free plan** sends 100 emails a day and a few a second. The app paces itself, and when a limit is reached it puts the rest back and sends them on a later run, for up to two days. A club of ten sends about ten emails per milestone, so watch the Resend dashboard as clubs grow.
+
+**TMDB's logo.** TMDB asks for its logo on the credits page. Download it from themoviedb.org/about/logos-attribution and save it as `public/credits/tmdb.svg`; `/credits` shows it once it is there.
+
 ## How it is put together
 
 ```
-src/app/(public)        homepage, privacy, terms
+src/app/(public)        homepage, privacy, terms, credits
 src/app/(auth)          sign in, sign up, password reset
 src/app/app             the private application
 src/app/invite/[token]  invitations
@@ -70,7 +89,9 @@ src/lib/actions         server actions: every mutation
 src/lib/data            club queries
 src/lib/books           Open Library and Google Books, normalised and merged
 src/lib/viewer.ts       who is signed in, which club is selected
-src/proxy.ts            session refresh and route protection
+src/proxy.ts            session refresh, route protection, the Content Security Policy
+src/lib/brand.ts        the product's name, tagline and colours
+src/lib/legal.ts        who runs it, for the privacy page and terms
 supabase/migrations     schema, rules, RLS, grants
 ```
 
@@ -98,7 +119,11 @@ supabase/migrations     schema, rules, RLS, grants
 
 **Search.** Typing looks in the app's own books after 200 ms and the public catalogues after 400 ms, at least 0.7 s apart, showing each catalogue’s results as they arrive (Open Library is given up on 4 s after the start once Google has answered), with answers remembered in the tab, a day's cache on the server and 60 catalogue searches per person per five minutes.
 
-**Books.** One row is one publication. The same provider id, or the same ISBN with compatible volumes, reuses a row. Anything less certain is put to the reader. Manual entries are visible only to the person who made them until they reach a club.
+**Security headers.** Every page is rendered per request (`connection()` in the root layout) so `src/proxy.ts` can give it a nonce-based Content Security Policy: scripts run only with that request's nonce, and images load only from the providers' hosts (`src/lib/images.ts`), Supabase Storage and Google. Pictures people paste in (manual covers, club images) are fetched by `/api/image` for signed-in members only: https, public addresses only (checked at connection time), real raster images up to 3 MB. So those sites never see who is looking.
+
+**Accounts.** Your account has email change (confirmed by link), a JSON download of everything the person has recorded (`/app/account/export`) and deletion. Changing the password or address needs the current password, or for Google-only accounts a sign-in in the last 15 minutes. Deletion removes the person's pictures, then the auth user; a trigger on `profiles` first closes clubs with nobody else in them and hands sole-administrator clubs to the longest-standing member.
+
+**Books.** One row is one publication. The same provider id, or the same ISBN with compatible volumes, reuses a row. Anything less certain is put to the reader. Manual entries are visible only to the person who made them until they reach a club, and can no longer be edited once a club has voted on or chosen them. Choosing a search result is limited to 60 an hour per person, and a result can only be chosen for six hours after it was found.
 
 After changing a migration, run `npm run db:types` to regenerate `src/lib/database.types.ts`.
 

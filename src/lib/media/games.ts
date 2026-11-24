@@ -13,8 +13,8 @@ export const gameSource = (): "igdb" | "rawg" | null => (igdbReady() ? "igdb" : 
 
 // ---------------------------------------------------------------------- IGDB
 
-const igdbBase = () => process.env.IGDB_URL ?? "https://api.igdb.com";
-const tokenUrl = () => process.env.TWITCH_TOKEN_URL ?? "https://id.twitch.tv/oauth2/token";
+const igdbBase = () => process.env.IGDB_URL || "https://api.igdb.com";
+const tokenUrl = () => process.env.TWITCH_TOKEN_URL || "https://id.twitch.tv/oauth2/token";
 
 let token: { value: string; until: number } | null = null;
 
@@ -87,7 +87,7 @@ async function igdbHours(id: string): Promise<number | null> {
 
 // ---------------------------------------------------------------------- RAWG
 
-const rawgBase = () => process.env.RAWG_URL ?? "https://api.rawg.io";
+const rawgBase = () => process.env.RAWG_URL || "https://api.rawg.io";
 
 type RawgGame = { id?: number; name?: string; released?: string | null; background_image?: string | null; platforms?: { platform?: { name?: string } }[] | null; playtime?: number };
 

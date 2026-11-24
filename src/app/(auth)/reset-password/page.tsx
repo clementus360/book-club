@@ -6,7 +6,7 @@ import { Shell } from "@/components/shell";
 import { updatePassword } from "@/lib/actions/auth";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Choose a new password" };
+export const metadata: Metadata = { title: "Choose a new password", robots: { index: false } };
 
 export default async function ResetPassword() {
   const supabase = await createClient();

@@ -6,7 +6,7 @@ import { blank, count, getJson, yearFrom } from "./common";
 // Films, from The Movie Database. Needs TMDB_API_KEY (the "API Key", v3).
 // TMDB asks to be credited, which the book page and privacy page do.
 
-const base = () => process.env.TMDB_URL ?? "https://api.themoviedb.org";
+const base = () => process.env.TMDB_URL || "https://api.themoviedb.org";
 const IMAGES = "https://image.tmdb.org/t/p/w342";
 export const tmdbReady = () => Boolean(process.env.TMDB_API_KEY);
 

@@ -56,7 +56,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {/* The middle scrolls if it must; the account stays put at the foot. */}
         <div className="sticky top-0 flex h-dvh flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto px-8 pt-9 pb-4">
-            <Wordmark href="/app" className="mb-7 block text-[1.6rem]" />
+            <Wordmark href="/app" fill className="mb-7 text-[1.6rem]" />
             {menu}
           </div>
           <div className="shrink-0 border-t border-rule px-8 py-2.5"><AccountMenu person={person} email={email} placement="up" /></div>

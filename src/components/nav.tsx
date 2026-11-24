@@ -63,7 +63,7 @@ export function BottomBar({ hasClub, kind, children }: { hasClub: boolean; kind:
             <span className="relative"><Icon of={Menu} size="1.25rem" className="block" />{unread > 0 && <span className="absolute -top-1 -right-1.5 size-2 rounded-full bg-rubric" />}</span>
             <span>More{unread > 0 && <span className="sr-only">, unread notifications</span>}</span>
           </summary>
-          <div className="absolute inset-x-0 bottom-full max-h-[75dvh] overflow-y-auto border-t border-rule bg-sheet px-6 py-6 shadow-[0_-12px_32px_rgb(33_31_27/0.12)]">{children}</div>
+          <div className="absolute inset-x-0 bottom-full max-h-[75dvh] overflow-y-auto border-t border-rule bg-sheet px-6 py-6 shadow-[0_-12px_32px_color-mix(in_srgb,var(--color-ink)_12%,transparent)]">{children}</div>
         </details>
       </div>
     </div>

@@ -1,4 +1,5 @@
 /** Meetings have a start but no end, so calendars are given two hours. */
+import { BRAND } from "@/lib/brand";
 export const MEETING_HOURS = 2;
 
 export type CalendarEvent = { title: string; club: string; starts_at: string; location: string | null; url: string };
@@ -29,8 +30,8 @@ export function subscribeUrl(app: CalendarApp, feed: string): string {
   const webcal = feed.replace(/^https?:/, "webcal:");
   switch (app) {
     case "google": return `https://calendar.google.com/calendar/render?${query({ cid: webcal })}`;
-    case "outlook": return `https://outlook.live.com/calendar/0/addfromweb?${query({ url: feed, name: "Commonplace" })}`;
-    case "work": return `https://outlook.office.com/calendar/0/addfromweb?${query({ url: feed, name: "Commonplace" })}`;
+    case "outlook": return `https://outlook.live.com/calendar/0/addfromweb?${query({ url: feed, name: BRAND.name })}`;
+    case "work": return `https://outlook.office.com/calendar/0/addfromweb?${query({ url: feed, name: BRAND.name })}`;
     case "apple": return webcal;
   }
 }
@@ -54,8 +55,8 @@ function fold(line: string): string {
 
 /** An iCalendar file (RFC 5545) of these meetings. */
 export function calendarFile(meetings: FeedMeeting[], site: string): string {
-  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Commonplace//Meetings//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
-    "NAME:Commonplace", "X-WR-CALNAME:Commonplace", "REFRESH-INTERVAL;VALUE=DURATION:PT1H", "X-PUBLISHED-TTL:PT1H"];
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", `PRODID:-//${BRAND.name}//Meetings//EN`, "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+    `NAME:${BRAND.name}`, `X-WR-CALNAME:${BRAND.name}`, "REFRESH-INTERVAL;VALUE=DURATION:PT1H", "X-PUBLISHED-TTL:PT1H"];
   for (const m of meetings) {
     const url = `${site}/app/meetings/${m.id}`;
     lines.push("BEGIN:VEVENT", `UID:${m.id}@commonplace`, `DTSTAMP:${compact(new Date(m.updated_at))}`, `LAST-MODIFIED:${compact(new Date(m.updated_at))}`,

@@ -6,15 +6,16 @@ import { acceptInvitation } from "@/lib/actions/clubs";
 import { formatDate } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { isKind, type Kind } from "@/lib/kinds";
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Invitation", robots: { index: false, follow: false }, referrer: "no-referrer" };
 
 const INVITE_LEDE: Record<Kind, string> = {
-  book: "A private book club on Commonplace, where you choose books together, read them, and talk about them in person.",
-  film: "A private film club on Commonplace, where you choose films together, watch them, and talk about them in person.",
-  series: "A private TV club on Commonplace, where you choose series together, watch them, and talk about them in person.",
-  anime: "A private anime club on Commonplace, where you choose anime together, watch them, and talk about them in person.",
-  game: "A private game club on Commonplace, where you choose games together, play them, and talk about them in person.",
+  book: `A private book club on ${BRAND.name}, where you choose books together, read them, and talk about them in person.`,
+  film: `A private film club on ${BRAND.name}, where you choose films together, watch them, and talk about them in person.`,
+  series: `A private TV club on ${BRAND.name}, where you choose series together, watch them, and talk about them in person.`,
+  anime: `A private anime club on ${BRAND.name}, where you choose anime together, watch them, and talk about them in person.`,
+  game: `A private game club on ${BRAND.name}, where you choose games together, play them, and talk about them in person.`,
 };
 
 type Preview =
@@ -67,7 +68,7 @@ export default async function Invite({ params }: { params: Promise<{ token: stri
   }
   return (
     <Shell title={PROBLEMS[preview.status][0]} lede={PROBLEMS[preview.status][1]}>
-      <Link className="btn btn-plain" href="/">About Commonplace</Link>
+      <Link className="btn btn-plain" href="/">About {BRAND.name}</Link>
     </Shell>
   );
 }

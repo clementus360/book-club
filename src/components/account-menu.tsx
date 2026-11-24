@@ -23,7 +23,7 @@ export function AccountMenu({ person, email, placement }: { person: { display_na
         <span className={up ? "min-w-0 flex-1 truncate" : "sr-only"}><span className="sr-only">Your menu: </span>{person.display_name}</span>
         {up && <Icon of={ChevronsUpDown} className="text-soft" />}
       </summary>
-      <div className={`absolute z-40 border border-rule bg-sheet shadow-[0_8px_28px_rgb(33_31_27/0.16)] ${up ? "inset-x-0 bottom-full mb-2" : "top-full right-0 mt-2 w-64 max-w-[calc(100vw-2.5rem)]"}`}>
+      <div className={`absolute z-40 border border-rule bg-sheet shadow-[0_8px_28px_color-mix(in_srgb,var(--color-ink)_16%,transparent)] ${up ? "inset-x-0 bottom-full mb-2" : "top-full right-0 mt-2 w-64 max-w-[calc(100vw-2.5rem)]"}`}>
         <p className="border-b border-rule px-4 py-3"><span className="block truncate font-serif">{person.display_name}</span><span className="meta block truncate">{email}</span></p>
         <ul className="py-1">
           <li><Link className={item} href="/app/account" onClick={close}><Icon of={UserRound} className="text-soft" />Your account</Link></li>

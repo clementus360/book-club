@@ -6,6 +6,7 @@ import { GoogleButton } from "@/components/google-button";
 import { Shell } from "@/components/shell";
 import { safeNext } from "@/lib/action";
 import { signUp } from "@/lib/actions/auth";
+import { MINIMUM_AGE } from "@/lib/legal";
 
 export const metadata: Metadata = { title: "Create an account" };
 
@@ -21,7 +22,7 @@ export default async function SignUp({ searchParams }: { searchParams: Promise<{
         <Field label="Password" name="password" type="password" autoComplete="new-password" required minLength={8} hint="At least 8 characters." />
         <Submit className="btn btn-primary w-full" pending="Creating your account…">Create account</Submit>
       </ActionForm>
-      <p className="mt-5 text-sm text-soft">By creating an account you agree to the <Link className="link" href="/terms">terms</Link> and <Link className="link" href="/privacy">privacy policy</Link>.</p>
+      <p className="mt-5 text-sm text-soft">By creating an account you confirm you are {MINIMUM_AGE} or over and agree to the <Link className="link" href="/terms">terms</Link> and <Link className="link" href="/privacy">privacy policy</Link>.</p>
       <p className="mt-8 border-t border-rule pt-6">Already have an account? <Link className="link" href={next ? `/login?next=${encodeURIComponent(to)}` : "/login"}>Sign in</Link></p>
     </Shell>
   );

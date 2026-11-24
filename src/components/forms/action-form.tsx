@@ -6,6 +6,7 @@ import { CircleAlert, CircleCheck } from "lucide-react";
 import type { ActionState } from "@/lib/action";
 import { takeKept, trouble } from "@/lib/trouble";
 import { Icon, Labelled } from "../icon";
+import { BRAND } from "@/lib/brand";
 
 export type FormAction = (state: ActionState | null, form: FormData) => Promise<ActionState>;
 
@@ -58,7 +59,7 @@ export function ActionForm({ action, children, className, onDone, resetOnDone = 
       {Object.entries(hidden ?? {}).map(([k, v]) => v != null && <input key={k} type="hidden" name={k} value={v} />)}
       {children}
       <div aria-live="polite">
-        {back && <p className="notice mt-4"><Icon of={CircleAlert} className="mt-[0.2em]" /><span>Commonplace was updated while this page was open, so it was reloaded. What you entered is back. Please save again.</span></p>}
+        {back && <p className="notice mt-4"><Icon of={CircleAlert} className="mt-[0.2em]" /><span>{BRAND.name} was updated while this page was open, so it was reloaded. What you entered is back. Please save again.</span></p>}
         {state?.message && <p className={`notice mt-4 ${state.ok ? "" : "error"}`}><Icon of={state.ok ? CircleCheck : CircleAlert} className="mt-[0.2em]" /><span>{state.message}</span></p>}
       </div>
     </form>

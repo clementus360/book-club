@@ -1,4 +1,5 @@
 import { cap, words, type Kind, type Words } from "./kinds";
+import { BRAND } from "@/lib/brand";
 
 /** Help for each page: what it is for, and what you can do there. */
 export type PageHelp = { title: string; about: string; todo: string[] };
@@ -30,7 +31,7 @@ const pages = (w: Words): [RegExp, PageHelp][] => {
 };
 
 export const helpFor = (path: string, kind: Kind = "book"): PageHelp =>
-  pages(words(kind)).find(([p]) => p.test(path))?.[1] ?? { title: "Commonplace", about: `A private place for your ${words(kind).club}.`, todo: ["Open the full guide to see how everything works."] };
+  pages(words(kind)).find(([p]) => p.test(path))?.[1] ?? { title: BRAND.name, about: `A private place for your ${words(kind).club}.`, todo: ["Open the full guide to see how everything works."] };
 
 export const glossary = ({ kind, many, a, verbs, verbed, mine }: Words): [string, string][] => [
   ["Club", `A private group of ${kind === "book" ? "readers" : "friends"}. Nobody outside can see it, and joining takes an invitation.`],

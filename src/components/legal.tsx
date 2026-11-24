@@ -1,4 +1,5 @@
 import { contactEmail } from "@/lib/env";
+import { BRAND } from "@/lib/brand";
 
 export function Legal({ title, updated, children }: { title: string; updated: string; children: React.ReactNode }) {
   const contact = contactEmail();
@@ -8,7 +9,7 @@ export function Legal({ title, updated, children }: { title: string; updated: st
       <p className="meta mt-3 !mb-10">Last updated {updated}</p>
       {children}
       <h2>Contact</h2>
-      <p>{contact ? <>Write to <a className="link" href={`mailto:${contact}`}>{contact}</a>.</> : "Contact whoever runs this installation of Commonplace."}</p>
+      <p>{contact ? <>Write to <a className="link" href={`mailto:${contact}`}>{contact}</a>.</> : `Contact whoever runs this installation of ${BRAND.name}.`}</p>
     </article>
   );
 }

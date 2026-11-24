@@ -19,7 +19,7 @@ export function ClubSwitcher({ clubs, current }: { clubs: Club[]; current: Club 
         <span className="min-w-0"><span className="sr-only">Club menu: </span><span className="line-clamp-2 font-serif text-lg leading-tight break-words">{current.name}</span></span>
         <Icon of={ChevronsUpDown} className="text-soft" />
       </summary>
-      <div className="absolute inset-x-0 top-full z-30 mt-1 border border-rule bg-sheet shadow-[0_8px_28px_rgb(33_31_27/0.16)]">
+      <div className="absolute inset-x-0 top-full z-30 mt-1 border border-rule bg-sheet shadow-[0_8px_28px_color-mix(in_srgb,var(--color-ink)_16%,transparent)]">
         <Link href="/app/settings" onClick={close} className={item}><Icon of={Settings} className="text-soft" />Club settings</Link>
         {others.length > 0 && (
           <form action={switchClub} className="border-t border-rule py-1">

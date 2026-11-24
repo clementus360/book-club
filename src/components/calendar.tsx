@@ -18,7 +18,7 @@ export function AddToCalendar({ google, outlook, work }: { google: string; outlo
   return (
     <details ref={ref} className="relative" onKeyDown={onKeyDown}>
       <summary className="link cursor-pointer list-none [&::-webkit-details-marker]:hidden"><Icon of={CalendarPlus} />Add to calendar<Icon of={ChevronDown} /></summary>
-      <div className="absolute top-full right-0 z-40 mt-2 w-64 max-w-[calc(100vw-2.5rem)] border border-rule bg-sheet whitespace-normal shadow-[0_8px_28px_rgb(33_31_27/0.16)]">
+      <div className="absolute top-full right-0 z-40 mt-2 w-64 max-w-[calc(100vw-2.5rem)] border border-rule bg-sheet whitespace-normal shadow-[0_8px_28px_color-mix(in_srgb,var(--color-ink)_16%,transparent)]">
         <ul className="py-1">
           <li><a className={item} href={google} {...OUT} onClick={close}>Google Calendar</a></li>
           <li><a className={item} href={outlook} {...OUT} onClick={close}>Outlook.com</a></li>

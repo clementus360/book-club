@@ -279,11 +279,24 @@ test("settings: profile, club, password, closing a club", async ({ browser }) =>
   await page.getByRole("button", { name: "Save name" }).click();
   await expect(page.getByText("Name saved.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Gilberto" })).toBeVisible();
-  await page.getByText("Choose one, or change it.").click();
+  await page.getByText("Change it.").click();
+  const pw = page.locator("form").filter({ has: page.getByRole("button", { name: "Change password" }) });
+  await pw.getByLabel("Current password").fill(PASSWORD);
   await page.getByLabel("New password", { exact: true }).fill("yet another password");
   await page.getByLabel("New password, again").fill("not the same thing");
   await page.getByRole("button", { name: "Change password" }).click();
   await expect(page.getByText("Those passwords do not match.")).toBeVisible();
+  // A session alone is not enough to change it.
+  await pw.getByLabel("Current password").fill("a wrong guess at it");
+  await page.getByLabel("New password", { exact: true }).fill("yet another password");
+  await page.getByLabel("New password, again").fill("yet another password");
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByText("That is not your current password.", { exact: false })).toBeVisible();
+  await pw.getByLabel("Current password").fill(PASSWORD);
+  await page.getByLabel("New password", { exact: true }).fill("yet another password");
+  await page.getByLabel("New password, again").fill("yet another password");
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByText("Password changed.")).toBeVisible();
   // Club settings are under the club's name.
   await page.locator("summary").filter({ hasText: "Club menu" }).first().click();
   await page.getByRole("link", { name: "Club settings" }).first().click();
@@ -371,4 +384,60 @@ test("signing in with Google keeps an invitation, and survives a change of mind"
   await g.goto("/auth/google?next=https://evil.test");
   await expect(g).toHaveURL(/localhost:\d+\/app/);
   expect(problems).toEqual([]);
+});
+
+test("deleting an account signs you out and hands your club on", async ({ browser }) => {
+  test.skip(Boolean(process.env.E2E_BASE_URL), "needs the test database");
+  const problems: string[] = [];
+  const [a, b] = [await person(browser, problems), await person(browser, problems)];
+  const address = await signUp(a, "Ida");
+  await createClub(a, "Handing On");
+  await joinViaInvite(b, "Jo", await invite(a), "Handing On");
+
+  await a.goto("/app/account");
+  await a.locator("summary").filter({ hasText: "Delete your account" }).click();
+  await a.getByLabel("To confirm, type your email address").fill("someone-else@example.test");
+  await a.getByRole("button", { name: "Delete my account" }).click();
+  await expect(a.getByText("Type your email address exactly as shown to confirm.")).toBeVisible();
+  await a.getByLabel("To confirm, type your email address").fill(address);
+  await a.getByRole("button", { name: "Delete my account" }).click();
+  await a.waitForURL(/\/login\?deleted/);
+  await expect(a.getByText("Your account and everything personal to it have been deleted.")).toBeVisible();
+
+  await a.getByLabel("Email").fill(address);
+  await a.getByLabel("Password").fill(PASSWORD);
+  await a.getByRole("button", { name: "Sign in" }).click();
+  await expect(a.getByText("That email and password do not match an account.")).toBeVisible();
+
+  await b.goto("/app/members");
+  await expect(b.getByText("Sole administrator")).toBeVisible();
+  expect(problems).toEqual([]);
+});
+
+test("changing your email address, and taking a copy of your data", async ({ page, request }) => {
+  test.skip(Boolean(process.env.E2E_BASE_URL), "needs the test database");
+  await signUp(page, "Kit");
+  await addToMyLibrary(page, "left hand", "The Left Hand of Darkness");
+  const next = email("kit-new");
+  await page.goto("/app/account");
+  await page.locator("summary").filter({ hasText: "Email address" }).click();
+  await page.getByLabel("New email address").fill(next);
+  const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Change email address" }) });
+  await form.getByLabel("Current password").fill("not my password");
+  await page.getByRole("button", { name: "Change email address" }).click();
+  await expect(page.getByText("That is not your current password.", { exact: false })).toBeVisible();
+  await form.getByLabel("Current password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Change email address" }).click();
+  await expect(page.getByText("Follow the link we have sent", { exact: false })).toBeVisible();
+  const [mail] = await (await request.get(`http://127.0.0.1:54399/emulator/mail?to=${next}`)).json();
+  await page.goto(mail.link);
+  await page.waitForURL("**/app/account");
+  await expect(page.locator("main").getByText(next).first()).toBeVisible();
+
+  await page.locator("summary").filter({ hasText: "Your data" }).click();
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download my data" }).click()]);
+  expect(download.suggestedFilename()).toMatch(/^commonplace-\d{4}-\d{2}-\d{2}\.json$/);
+  const data = JSON.parse(await (await import("node:fs/promises")).readFile((await download.path())!, "utf8"));
+  expect(data.account).toMatchObject({ email: next, display_name: "Kit" });
+  expect(data.my_books.map((b: { book: { title: string } }) => b.book.title)).toEqual(["The Left Hand of Darkness"]);
 });

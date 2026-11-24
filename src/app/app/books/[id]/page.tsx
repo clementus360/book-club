@@ -92,6 +92,7 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
               {book.alternative_titles.length > 0 && <Fact term="Also known as">{book.alternative_titles.slice(0, 4).join("; ")}</Fact>}
               <Fact term="Details from">{sourcePage(book) ? <a className="link" href={sourcePage(book)!} target="_blank" rel="noopener noreferrer">{SOURCE_LABELS[book.metadata_source]}</a> : SOURCE_LABELS[book.metadata_source]}
                 {book.metadata_source === "tmdb" && <span className="meta mt-1 block">This product uses the TMDB API but is not endorsed or certified by TMDB.</span>}
+                {book.metadata_source === "tvmaze" && <span className="meta mt-1 block">Under <a className="link" href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA</a>.</span>}
               </Fact>
               {club && shelf.data && <Fact term="On the club shelf">Added {shelf.data.added_by ? `by ${nameOf(shelf.data.adder)}, ` : ""}{formatDate(shelf.data.added_at, zone)}</Fact>}
             </Facts>

@@ -238,7 +238,58 @@ describe("profile pictures", () => {
     const a = await h.user();
     const set = (url: string) => h.as(a, "update profiles set avatar_url = $1 where id = $2", [url, a]);
     await set("https://lh3.googleusercontent.com/a/x=s96-c");
-    await set("http://127.0.0.1:54399/storage/v1/object/public/avatars/x.webp");
-    for (const bad of ["javascript:alert(1)", "http://example.com/x.png", "data:image/png;base64,AAAA", `https://${"x".repeat(1000)}`]) await expect(set(bad)).rejects.toThrow(/check constraint/);
+    await set(`http://127.0.0.1:54399/storage/v1/object/public/avatars/${a}/${randomUUID()}.webp`);
+    await set(`https://abc.supabase.co/storage/v1/object/public/avatars/${a}/${randomUUID()}.jpg`);
+    const other = await h.user();
+    for (const bad of [
+      "javascript:alert(1)", "http://example.com/x.png", "data:image/png;base64,AAAA", `https://${"x".repeat(1000)}`,
+      "https://tracker.example/pixel.png", // anywhere else on the web
+      `https://abc.supabase.co/storage/v1/object/public/avatars/${other}/x.webp`, // someone else's upload
+      `https://abc.supabase.co/storage/v1/object/public/avatars/${a}/../x.webp`,
+    ]) await expect(set(bad)).rejects.toThrow(/check constraint/);
+  });
+});
+
+describe("deleting an account", () => {
+  const remove = (who: string) => h.sql("delete from auth.users where id = $1", [who]);
+  const roles = (club: string) => h.sql("select user_id, role from club_memberships where club_id = $1 order by joined_at", [club]);
+
+  it("closes a club no one else belongs to", async () => {
+    const a = await h.user();
+    const club = await h.club(a);
+    await remove(a);
+    expect(await h.sql("select id from clubs where id = $1", [club])).toEqual([]);
+    expect(await h.sql("select id from profiles where id = $1", [a])).toEqual([]);
+  });
+  it("passes a club to its longest-standing member when the only administrator goes", async () => {
+    const [a, b, c] = [await h.user(), await h.user(), await h.user()];
+    const club = await h.club(a);
+    await h.join(a, club, b);
+    await h.join(a, club, c);
+    const book = await h.importBook("Left Behind");
+    await h.rpc(a, "add_club_book", { p_club_id: club, p_book_id: book });
+    await h.shelve(a, book);
+    await remove(a);
+    expect(await roles(club)).toEqual([{ user_id: b, role: "admin" }, { user_id: c, role: "member" }]);
+    // What they gave the club stays, without their name; what was theirs goes.
+    expect(await h.sql("select added_by from club_books where club_id = $1", [club])).toEqual([{ added_by: null }]);
+    expect(await h.sql("select 1 from user_books where user_id = $1", [a])).toEqual([]);
+  });
+  it("promotes no one when another administrator remains", async () => {
+    const [a, b, c] = [await h.user(), await h.user(), await h.user()];
+    const club = await h.club(a);
+    await h.join(a, club, b);
+    await h.join(a, club, c);
+    await h.rpc(a, "set_member_role", { p_club_id: club, p_user_id: c, p_role: "admin" });
+    await remove(a);
+    expect(await roles(club)).toEqual([{ user_id: b, role: "member" }, { user_id: c, role: "admin" }]);
+  });
+  it("settles every club at once", async () => {
+    const [a, b] = [await h.user(), await h.user()];
+    const [solo, shared] = [await h.club(a, "Solo"), await h.club(a, "Shared")];
+    await h.join(a, shared, b);
+    await remove(a);
+    expect(await h.sql("select id from clubs where id = $1", [solo])).toEqual([]);
+    expect(await roles(shared)).toEqual([{ user_id: b, role: "admin" }]);
   });
 });

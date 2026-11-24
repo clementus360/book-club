@@ -13,6 +13,7 @@ import { authorsOf, platformList } from "./book-line";
 import { BookCover } from "./book-cover";
 import { Icon } from "./icon";
 import { trouble } from "@/lib/trouble";
+import { BRAND } from "@/lib/brand";
 
 type Found = { local: Candidate[]; results: SearchResult[]; unavailable: string[] };
 /** Answers already received, for as long as the tab is open. */
@@ -189,13 +190,13 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
           <div aria-live="polite" className="mt-4">
             {searching && <p className="meta">{found?.results.length && waiting.length === 1 ? `Still looking in ${waiting[0]}…` : "Searching…"}</p>}
             {problem && <p className="notice error">{problem}</p>}
-            {found && found.unavailable.length > 0 && !searching && <p className="meta">{found.unavailable.join(" and ")}{found.results.length || !found.unavailable.some(providerMissing) ? ` could not be reached just now, so some ${w.many} may be missing. Press Enter to try again.` : ` is not set up yet, so only ${w.many} already in Commonplace can be found. You can enter one by hand.`}</p>}
+            {found && found.unavailable.length > 0 && !searching && <p className="meta">{found.unavailable.join(" and ")}{found.results.length || !found.unavailable.some(providerMissing) ? ` could not be reached just now, so some ${w.many} may be missing. Press Enter to try again.` : ` is not set up yet, so only ${w.many} already in ${BRAND.name} can be found. You can enter one by hand.`}</p>}
             {nothing && !searching && <p className="py-4 font-serif text-lg">{`Nothing found for that. Try another spelling, or enter the ${w.one} by hand.`}</p>}
           </div>
           {found && (
             <>
               {found.local.length > 0 && (
-                <section className="mt-8"><h3 className="rubric mb-2">Already in Commonplace</h3>
+                <section className="mt-8"><h3 className="rubric mb-2">Already in {BRAND.name}</h3>
                   <ul>{found.local.map((b) => <Option key={b.id} book={b} source="" disabled={busy} onClick={() => setStep({ at: "confirm", book: b })} />)}</ul>
                 </section>
               )}
@@ -232,7 +233,7 @@ export function BookPicker({ initialBook, prefill, suggestions = [], suggestions
       {step.at === "choose" && (
         <>
           <h2 ref={heading} tabIndex={-1} className="text-xl outline-none">Is it one of these?</h2>
-          <p className="mt-2 mb-4 text-soft">{kind === "book" ? "Commonplace already has something that looks similar. If it is the same edition or volume, choose it." : `Commonplace already has something that looks similar. If it is the same ${w.one}, choose it.`}</p>
+          <p className="mt-2 mb-4 text-soft">{kind === "book" ? `${BRAND.name} already has something that looks similar. If it is the same edition or volume, choose it.` : `${BRAND.name} already has something that looks similar. If it is the same ${w.one}, choose it.`}</p>
           <ul className="border-b border-rule">{step.candidates.map((b) => <Option key={b.id} book={b} source="" disabled={busy} onClick={() => setStep({ at: "confirm", book: b })} />)}</ul>
           {problem && <p role="alert" className="notice error mt-4">{problem}</p>}
           <div className="mt-6 flex flex-wrap gap-3">

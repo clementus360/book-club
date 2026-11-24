@@ -4,6 +4,7 @@ import { Icon } from "@/components/icon";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { HERO_SLIDES } from "@/lib/hero";
 import "./hero.css";
+import { BRAND } from "@/lib/brand";
 
 const STEPS = [
   ["Suggest something", "Recommend something you loved whenever it occurs to you. When it is time to choose, each member nominates one."],
@@ -31,9 +32,9 @@ export default function Home() {
     <>
       <section className="grid items-center gap-x-10 gap-y-8 py-10 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)] lg:items-start lg:pt-0 lg:pb-10">
         <div className="lg:pt-24">
-          <h1 className="text-[2.9rem] leading-[1.02] sm:text-6xl lg:text-[4.25rem]">Good stories.<br />Better<br className="hidden lg:block" /> conversations.</h1>
-          <p className="mt-6 max-w-md text-lg leading-relaxed text-soft sm:text-xl">
-            Commonplace gives your club one shared place to choose what comes next, enjoy it together, and organise conversations worth having. Books, films, TV, anime or games.
+          <h1 className="text-[2.9rem] leading-[1.02] sm:text-6xl lg:text-[4.25rem]">Good stories.<br /><span className="brand-accent">Better<br className="hidden lg:block" /> conversations.</span></h1>
+          <p className="mt-6 max-w-md text-base leading-relaxed text-soft sm:text-[1.0625rem]">
+            {BRAND.name} gives your club one shared place to choose what comes next, enjoy it together, and organise conversations worth having. Books, films, TV, anime or games.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/signup" className="btn btn-primary">Start a club</Link>

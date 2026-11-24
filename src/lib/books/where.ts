@@ -4,6 +4,7 @@ import type { Kind } from "@/lib/kinds";
 import { anilistStreams } from "@/lib/media/anilist";
 import { tmdbWatch } from "@/lib/media/tmdb";
 import { tvmazeHome } from "@/lib/media/tvmaze";
+import { BRAND } from "@/lib/brand";
 
 /** Ways to get hold of something: read free, borrow, stream, find in a library, or buy. */
 export type Way = { kind: "free" | "borrow" | "stream" | "library" | "buy"; label: string; note: string; href: string };
@@ -14,13 +15,13 @@ type Book = {
   kind?: Kind; metadata_source?: string; external_id?: string | null; platforms?: string[]; language?: string | null; publication_year?: number | null;
 };
 
-const gb = () => process.env.GOOGLE_BOOKS_URL ?? "https://www.googleapis.com";
+const gb = () => process.env.GOOGLE_BOOKS_URL || "https://www.googleapis.com";
 const DAY = 86_400;
 
 /** JSON, or null. A failure only means a line is left out, but it is logged so it can be noticed. */
 async function get(url: URL, timeout = 4000): Promise<unknown> {
   try {
-    const res = await fetch(url, { headers: { "User-Agent": "Commonplace/1.0 (private book clubs)" }, signal: AbortSignal.timeout(timeout), next: { revalidate: DAY } });
+    const res = await fetch(url, { headers: { "User-Agent": `${BRAND.name}/1.0 (private book clubs)` }, signal: AbortSignal.timeout(timeout), next: { revalidate: DAY } });
     if (!res.ok) console.warn(`[commonplace] ${url.hostname} responded ${res.status}`);
     return res.ok ? await res.json() : null;
   } catch (error) {
@@ -31,7 +32,7 @@ async function get(url: URL, timeout = 4000): Promise<unknown> {
 
 const OL_ID = /^OL\d+[MW]$/;
 
-const ia = () => process.env.INTERNET_ARCHIVE_URL ?? "https://archive.org";
+const ia = () => process.env.INTERNET_ARCHIVE_URL || "https://archive.org";
 
 type Item = { identifier?: string; openlibrary_edition?: string[] | string; language?: string[] | string; lending___status?: string[] | string; "access-restricted-item"?: string | boolean };
 const list = (v: string[] | string | undefined) => (Array.isArray(v) ? v : v ? [v] : []);

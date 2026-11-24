@@ -1,4 +1,5 @@
 import { unstable_isUnrecognizedActionError, unstable_rethrow } from "next/navigation";
+import { BRAND } from "@/lib/brand";
 
 /**
  * What to tell someone when a server action throws instead of answering.
@@ -14,13 +15,13 @@ export function trouble(error: unknown, form?: HTMLFormElement | null): { ok: fa
   if (unstable_isUnrecognizedActionError(error)) {
     if (keepForReload(form)) {
       window.location.reload();
-      return { ok: false, message: "Commonplace has just been updated. Reloading the page…", at };
+      return { ok: false, message: `${BRAND.name} has just been updated. Reloading the page…`, at };
     }
-    return { ok: false, message: "Commonplace has just been updated. Please reload the page and try again.", at };
+    return { ok: false, message: `${BRAND.name} has just been updated. Please reload the page and try again.`, at };
   }
   // A dropped connection, or a request cut short by leaving the page: nothing to log.
   if (error instanceof TypeError || (typeof navigator !== "undefined" && !navigator.onLine)) {
-    return { ok: false, message: "Commonplace could not be reached. Check your connection and try again.", at };
+    return { ok: false, message: `${BRAND.name} could not be reached. Check your connection and try again.`, at };
   }
   console.error("[commonplace] action failed", error);
   const digest = (error as { digest?: unknown } | null)?.digest;

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/wordmark";
+import { BRAND } from "@/lib/brand";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,10 +15,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       </header>
       <main className="flex-1">{children}</main>
       <footer className="mt-14 flex flex-wrap justify-between gap-4 border-t border-rule py-8 text-sm text-soft lg:mt-20">
-        <p>Commonplace. Good stories. Better conversations.</p>
+        <p>{BRAND.name}. {BRAND.tagline}</p>
         <nav aria-label="Legal" className="flex gap-6">
           <Link href="/privacy" className="hover:underline underline-offset-4">Privacy</Link>
           <Link href="/terms" className="hover:underline underline-offset-4">Terms</Link>
+          <Link href="/credits" className="hover:underline underline-offset-4">Credits</Link>
         </nav>
       </footer>
     </div>

@@ -137,7 +137,7 @@ export function HintLayer() {
 
   return (
     <div ref={tip} id="hint-popup" popover="manual" role={shown?.ask ? "alertdialog" : "tooltip"} aria-label={shown?.ask ? "What this does" : undefined}
-      className="m-0 w-max max-w-[min(300px,calc(100vw-24px))] border-0 bg-ink px-3.5 py-2.5 text-sm leading-snug text-sheet shadow-[0_6px_24px_rgb(33_31_27/0.28)]"
+      className="m-0 w-max max-w-[min(300px,calc(100vw-24px))] border-0 bg-ink px-3.5 py-2.5 text-sm leading-snug text-sheet shadow-[0_6px_24px_color-mix(in_srgb,var(--color-ink)_28%,transparent)]"
       style={shown ? { position: "fixed", inset: "auto", left: shown.x, top: shown.y, transform: `translate(-50%, ${shown.below ? "0" : "-100%"})` } : undefined}>
       {shown?.text}
       {shown?.ask && (

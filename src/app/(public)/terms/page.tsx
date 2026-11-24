@@ -1,26 +1,32 @@
 import type { Metadata } from "next";
 import { Legal } from "@/components/legal";
+import { MINIMUM_AGE, OPERATOR } from "@/lib/legal";
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Terms" };
 
 export default function Terms() {
   return (
-    <Legal title="Terms of service" updated="22 November 2026">
-      <p>By using Commonplace you agree to these terms.</p>
+    <Legal title="Terms of service" updated="24 November 2026">
+      <p>{BRAND.name} is run by {OPERATOR.name}, in {OPERATOR.country} (“we”). By using it you agree to these terms.</p>
       <h2>Your account</h2>
-      <p>Give a working email address, keep your password to yourself, and use one account per person. You are responsible for what happens under your account.</p>
+      <p>You must be at least {MINIMUM_AGE} to use {BRAND.name}. Give a working email address, keep your password to yourself, and use one account per person. You are responsible for what happens under your account.</p>
       <h2>Clubs</h2>
       <p>Clubs are private and run by their members. Administrators may invite and remove people and manage the club’s settings, books and meetings. Please only invite people who would like to be invited.</p>
       <h2>What you write</h2>
-      <p>What you write is yours. You allow Commonplace to store it and to show it to the people described on the privacy page. Keep quotations to what fair use allows, and do not post anything unlawful, harassing or that is not yours to share.</p>
+      <p>What you write is yours. You allow {BRAND.name} to store it and to show it to the people described on the privacy page. Keep quotations to what fair use allows, and do not post anything unlawful, harassing or that is not yours to share.</p>
       <h2>Book, film and game information</h2>
       <p>Book details and covers come from Open Library, Google Books and fellow readers. Films come from The Movie Database (TMDB), series from TVmaze, anime from AniList and games from IGDB or RAWG, as well as from members. Any of it may be incomplete or wrong. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
       <h2>Fair use of the service</h2>
       <p>Do not try to reach other people’s private information, disrupt the service, or collect data from it automatically.</p>
       <h2>No guarantees</h2>
-      <p>Commonplace is provided as it is. We try to keep it running and your records safe, but cannot promise it will always be available. To the extent the law allows, we are not liable for losses arising from its use.</p>
+      <p>{BRAND.name} is provided as it is. We try to keep it running and your records safe, but cannot promise it will always be available. To the extent the law allows, we are not liable for losses arising from its use.</p>
       <h2>Ending things</h2>
-      <p>You can leave a club, or stop using Commonplace, whenever you like. Accounts that break these terms may be closed.</p>
+      <p>You can leave a club, or delete your account from Your account, whenever you like. Accounts that break these terms may be closed. We may also stop offering {BRAND.name}, and if we do, we will give reasonable notice so you can take a copy of your records.</p>
+      <h2>Changes to these terms</h2>
+      <p>We may change these terms. If a change matters, we will say so in {BRAND.name} or by email before it takes effect. If you keep using {BRAND.name} afterwards, the new terms apply; if you do not agree, you can delete your account.</p>
+      <h2>Law</h2>
+      <p>These terms are governed by the laws of {OPERATOR.country}, and disputes are for {OPERATOR.courts}. If you use {BRAND.name} as a consumer, this does not take away any protection the law where you live gives you.</p>
     </Legal>
   );
 }

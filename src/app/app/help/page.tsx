@@ -5,6 +5,7 @@ import { PageHeader, Section } from "@/components/ui";
 import { glossary } from "@/lib/help";
 import { cap, words, type Words } from "@/lib/kinds";
 import { getViewer } from "@/lib/viewer";
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Help and guide" };
 
@@ -35,7 +36,7 @@ export default async function Help() {
   const w = words(club?.kind);
   return (
     <>
-      <PageHeader kicker="Commonplace" title="Help and guide" action={<Link className="btn btn-plain" href={club ? "/app" : "/onboarding"}>{club ? "Back to the club" : "Start or join a club"}</Link>}>Everything in plain words. You can also use “Help with this page” anywhere.</PageHeader>
+      <PageHeader kicker={BRAND.name} title="Help and guide" action={<Link className="btn btn-plain" href={club ? "/app" : "/onboarding"}>{club ? "Back to the club" : "Start or join a club"}</Link>}>Everything in plain words. You can also use “Help with this page” anywhere.</PageHeader>
       <Section title="How it works, from start to finish">
         <ol>
           {story(w).map(([title, body], i) => (

@@ -208,6 +208,11 @@ export async function startEmulator({ databaseUrl, port, stub }) {
     const claims = readJwt((req.headers.authorization ?? "").replace(/^Bearer /i, ""));
     if (!claims) return fail(401, "Invalid JWT");
     try {
+      if (req.method === "POST" && bucket === "list" && name) {
+        const { prefix = "" } = JSON.parse(raw.toString() || "{}");
+        const { rows } = await asRole(claims, (c) => c.query("select name from storage.objects where bucket_id = $1 and name like $2 || '/%'", [decodeURIComponent(name), prefix]));
+        return json(200, rows.map((r) => ({ name: r.name.slice(prefix.length + 1), id: randomUUID() })));
+      }
       if (req.method === "POST" && name) {
         const key = decodeURIComponent(name);
         const type = String(req.headers["content-type"] ?? "").split(";")[0];
@@ -234,14 +239,16 @@ export async function startEmulator({ databaseUrl, port, stub }) {
   }
 
   // ------------------------------------------------------------------ Auth
-  const publicUser = (u) => ({ id: u.id, aud: "authenticated", role: "authenticated", email: u.email, user_metadata: u.raw_user_meta_data, app_metadata: {}, created_at: u.created_at, identities: [] });
+  // Like Supabase: "email" for accounts made with a password, "google" for the rest.
+  const publicUser = (u) => ({ id: u.id, aud: "authenticated", role: "authenticated", email: u.email, user_metadata: u.raw_user_meta_data, app_metadata: { providers: [u.encrypted_password ? "email" : "google"] }, created_at: u.created_at, identities: [] });
   const usedAt = new Map();
-  function session(u) {
+  // amr says how the session began, and stays the same when it is refreshed.
+  function session(u, amr = [{ method: "password", timestamp: Math.floor(Date.now() / 1000) }]) {
     const refresh = randomBytes(12).toString("hex");
-    sessions.set(refresh, u.id);
+    sessions.set(refresh, { id: u.id, amr });
     const life = Number(process.env.EMULATOR_TOKEN_SECONDS ?? 3600);
     const exp = Math.floor(Date.now() / 1000) + life;
-    const access_token = signJwt({ sub: u.id, role: "authenticated", aud: "authenticated", email: u.email, session_id: randomUUID(), iat: exp - life, exp });
+    const access_token = signJwt({ sub: u.id, role: "authenticated", aud: "authenticated", email: u.email, session_id: randomUUID(), amr, iat: exp - life, exp });
     return { access_token, token_type: "bearer", expires_in: life, expires_at: exp, refresh_token: refresh, user: publicUser(u) };
   }
   const byEmail = async (e) => (await pool.query("select * from auth.users where email = $1", [String(e).toLowerCase()])).rows[0];
@@ -267,22 +274,23 @@ export async function startEmulator({ databaseUrl, port, stub }) {
         // Like Supabase: a used refresh token keeps working for 10 seconds, then is revoked.
         const used = usedAt.get(body.refresh_token);
         if (used && Date.now() - used > 10_000) return fail(400, "refresh_token_already_used", "Invalid Refresh Token: Already Used");
-        const u = sessions.has(body.refresh_token) && (await byId(sessions.get(body.refresh_token)));
+        const s = sessions.get(body.refresh_token);
+        const u = s && (await byId(s.id));
         if (u && !used) usedAt.set(body.refresh_token, Date.now());
-        return u ? send(200, session(u)) : fail(400, "refresh_token_not_found", "Invalid Refresh Token");
+        return u ? send(200, session(u, s.amr)) : fail(400, "refresh_token_not_found", "Invalid Refresh Token");
       }
       if (grant === "pkce") {
         const c = codes.get(body.auth_code);
         codes.delete(body.auth_code);
         if (!c || createHash("sha256").update(body.code_verifier).digest("base64url") !== c.challenge) return fail(400, "bad_code_verifier", "bad code");
-        return send(200, session(await byId(c.user)));
+        return send(200, session(await byId(c.user), [{ method: c.method ?? "oauth", timestamp: Math.floor(Date.now() / 1000) }]));
       }
     }
     if (route === "/recover") {
       const u = await byEmail(body.email);
       if (u) {
         const token = randomBytes(16).toString("hex");
-        links.set(token, { user: u.id, challenge: body.code_challenge });
+        links.set(token, { user: u.id, challenge: body.code_challenge, method: "recovery" });
         mail.push({ to: u.email, link: `http://127.0.0.1:${port}/auth/v1/verify?token=${token}&type=recovery&redirect_to=${encodeURIComponent(url.searchParams.get("redirect_to") ?? "")}` });
       }
       return send(200, {});
@@ -291,6 +299,7 @@ export async function startEmulator({ databaseUrl, port, stub }) {
       const l = links.get(url.searchParams.get("token"));
       links.delete(url.searchParams.get("token"));
       const to = new URL(url.searchParams.get("redirect_to"));
+      if (l?.email) await pool.query("update auth.users set email = $1 where id = $2", [l.email, l.user]);
       if (l) { const code = randomUUID(); codes.set(code, l); to.searchParams.set("code", code); } else to.searchParams.set("error", "access_denied");
       res.writeHead(303, { location: to.toString() });
       return res.end();
@@ -309,10 +318,24 @@ export async function startEmulator({ databaseUrl, port, stub }) {
       return res.end();
     }
     if (route === "/logout") return send(204);
+    const admin = route.match(/^\/admin\/users\/([0-9a-f-]{36})$/);
+    if (admin) {
+      if (claims?.role !== "service_role") return fail(403, "not_admin", "User not allowed");
+      const u = await byId(admin[1]);
+      if (!u) return fail(404, "user_not_found", "User not found");
+      if (req.method === "DELETE") await pool.query("delete from auth.users where id = $1", [u.id]);
+      return send(200, publicUser(u));
+    }
     if (route === "/user") {
       const u = claims?.sub && (await byId(claims.sub));
       if (!u) return fail(403, "bad_jwt", "invalid JWT");
       if (req.method === "PUT" && body.password) await pool.query("update auth.users set encrypted_password = $1 where id = $2", [hash(body.password), u.id]);
+      if (req.method === "PUT" && body.email) { // nothing changes until the link is followed
+        if (await byEmail(body.email)) return fail(422, "email_exists", "A user with this email address has already been registered");
+        const token = randomBytes(16).toString("hex");
+        links.set(token, { user: u.id, challenge: body.code_challenge, method: "email_change", email: String(body.email).toLowerCase() });
+        mail.push({ to: String(body.email).toLowerCase(), link: `http://127.0.0.1:${port}/auth/v1/verify?token=${token}&type=email_change&redirect_to=${encodeURIComponent(url.searchParams.get("redirect_to") ?? "")}` });
+      }
       return send(200, publicUser(u));
     }
     fail(404, "not_found", route);

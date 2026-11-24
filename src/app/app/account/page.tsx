@@ -1,4 +1,4 @@
-import { CalendarSync, Gamepad2, KeyRound, Mail, UserRound } from "lucide-react";
+import { AtSign, CalendarSync, Palette, Download, Gamepad2, KeyRound, Mail, Trash2, UserRound } from "lucide-react";
 import { Labelled } from "@/components/icon";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -7,20 +7,23 @@ import { ActionForm, Submit } from "@/components/forms/action-form";
 import { Checkbox, Field } from "@/components/forms/fields";
 import { PictureForm } from "@/components/picture-form";
 import { Avatar, PageHeader, Section } from "@/components/ui";
-import { signOut, updatePassword } from "@/lib/actions/auth";
+import { changeEmail, deleteAccount, signOut, updatePassword } from "@/lib/actions/auth";
 import { updateEmailUpdates, updatePlatforms, updateProfile } from "@/lib/actions/clubs";
 import { isPlatform, PLATFORM_LABEL, PLATFORMS, words } from "@/lib/kinds";
+import { currentTheme } from "@/lib/theme";
 import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Your account" };
 
 export default async function Account() {
   const { profile, email, supabase, club, clubs } = await getViewer();
+  const theme = await currentTheme();
   const gamer = clubs.some((c) => c.kind === "game");
   // Offered only to people Google has given a picture for.
   const { data: auth } = await supabase.auth.getUser();
   const meta = auth.user?.user_metadata ?? {};
   const google = [meta.avatar_url, meta.picture].some((u) => typeof u === "string" && /^https:\/\/[a-z0-9-]+\.googleusercontent\.com\//.test(u));
+  const hasPassword = ((auth.user?.app_metadata?.providers ?? []) as string[]).includes("email");
   return (
     <>
       <PageHeader icon={UserRound} kicker="Just for you" title="Your account" action={<form action={signOut}><button className="btn btn-plain"><Labelled>Sign out</Labelled></button></form>}>
@@ -57,14 +60,44 @@ export default async function Account() {
             </ActionForm>
           </Fold>
         )}
+        <Fold icon={Palette} title="Look" note={theme === "brand" ? "CommonPlace, the new look." : "Classic, the earlier look."}>
+          <p className="mb-4">Try either look. It changes only this browser.</p>
+          <div className="flex flex-wrap gap-3">
+            {/* Plain links: the whole page must reload to take the new look. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a className={`btn ${theme === "brand" ? "btn-primary" : "btn-plain"}`} href="/theme/brand?back=/app/account" aria-current={theme === "brand" || undefined}><Labelled>New look</Labelled></a>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a className={`btn ${theme === "classic" ? "btn-primary" : "btn-plain"}`} href="/theme/classic?back=/app/account" aria-current={theme === "classic" || undefined}><Labelled>Classic look</Labelled></a>
+          </div>
+        </Fold>
         <Fold icon={CalendarSync} title="Calendar" note="See your meetings in your own calendar.">
           <Link className="btn btn-plain" href="/app/calendar"><Labelled>Add to my calendar</Labelled></Link>
         </Fold>
-        <Fold icon={KeyRound} title="Password" note="Choose one, or change it.">
+        <Fold icon={KeyRound} title="Password" note={hasPassword ? "Change it." : "Choose one, or change it."}>
           <ActionForm action={updatePassword} resetOnDone className="form">
+            {hasPassword && <Field label="Current password" name="current_password" type="password" autoComplete="current-password" required />}
             <Field label="New password" name="password" type="password" autoComplete="new-password" required minLength={8} hint="At least 8 characters." />
             <Field label="New password, again" name="password_again" type="password" autoComplete="new-password" required minLength={8} />
             <Submit>Change password</Submit>
+          </ActionForm>
+        </Fold>
+        <Fold icon={AtSign} title="Email address" note={email}>
+          <ActionForm action={changeEmail} resetOnDone className="form">
+            <Field label="New email address" name="email" type="email" autoComplete="email" required maxLength={254} hint="We send a link to it. The change takes effect when you follow it." />
+            {hasPassword && <Field label="Current password" name="current_password" type="password" autoComplete="current-password" required />}
+            <Submit>Change email address</Submit>
+          </ActionForm>
+        </Fold>
+        <Fold icon={Download} title="Your data" note="A copy of everything you have recorded.">
+          <p className="mb-4">Your account, list, notes, ratings, reviews, votes, progress and what you have written in your clubs, in one file (JSON) you can keep or take elsewhere.</p>
+          <a className="btn btn-plain" href="/app/account/export"><Labelled>Download my data</Labelled></a>
+        </Fold>
+        <Fold icon={Trash2} title="Delete your account" note="For good. This cannot be undone.">
+          <ActionForm action={deleteAccount} className="form">
+            <p className="mb-4">Your account, your list, your notes, ratings and private reviews, your votes and your picture are deleted. What you wrote for a club, such as discussion notes and club reviews, stays in its record without your name.</p>
+            <p className="mb-4">{clubs.length ? "A club with nobody else in it is closed. If you are a club’s only administrator, the member who has been there longest takes over." : "You are not in any clubs."}</p>
+            <Field label="To confirm, type your email address" name="confirm" type="email" autoComplete="off" required hint={email} />
+            <Submit className="btn btn-danger" pending="Deleting…">Delete my account</Submit>
           </ActionForm>
         </Fold>
       </Section>

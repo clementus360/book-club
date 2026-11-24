@@ -7,6 +7,7 @@
 export type Hint = { text: string; acts?: true };
 
 import { cap, words, type Kind, type Words } from "./kinds";
+import { BRAND } from "@/lib/brand";
 
 const say = (text: string): Hint => ({ text });
 const acts = (text: string): Hint => ({ text, acts: true });
@@ -163,8 +164,13 @@ function build(w: Words): Record<string, Hint> {
   "Use my Google picture": say("Shows the picture from your Google account. You can change it any time."),
   "Remove picture": say("Takes your picture away. Your initial is shown instead."),
   "Change password": say("Replaces your password."),
+  "Change email address": acts("Sends a link to the new address. Your address changes when you follow it."),
+  "New look": acts("Shows CommonPlace in its new colours and type, in this browser."),
+  "Classic look": acts("Shows CommonPlace in its earlier look, in this browser."),
+  "Download my data": acts("Downloads a copy of everything you have recorded, as a file you can keep."),
+  "Delete my account": acts("Deletes your account and everything personal to it, for good. Your clubs are handed on or closed."),
   "Save email settings": say("Saves whether you are emailed at important moments."),
-  "Stop these emails": say("Turns off emails from Commonplace. The app keeps working as before."),
+  "Stop these emails": say(`Turns off emails from ${BRAND.name}. The app keeps working as before.`),
   "Save club settings": say("Saves these details for the whole club."),
   "Close the club": say("Permanently deletes this club. You will be asked to confirm."),
   "Create the club": say("Creates a private club with you as its administrator."),

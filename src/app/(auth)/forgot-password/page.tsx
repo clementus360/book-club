@@ -5,7 +5,7 @@ import { Field } from "@/components/forms/fields";
 import { Shell } from "@/components/shell";
 import { requestReset } from "@/lib/actions/auth";
 
-export const metadata: Metadata = { title: "Reset your password" };
+export const metadata: Metadata = { title: "Reset your password", robots: { index: false } };
 
 export default function ForgotPassword() {
   return (

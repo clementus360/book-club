@@ -1,12 +1,13 @@
 import "server-only";
 import { inferFormat, normalizeLanguage, parseVolume, pickIsbns, plainText, yearOf, asIsbn, fold, trustedCover } from "./normalize";
 import type { BookRecord } from "./types";
+import { BRAND } from "@/lib/brand";
 
-const base = () => process.env.OPEN_LIBRARY_URL ?? "https://openlibrary.org";
+const base = () => process.env.OPEN_LIBRARY_URL || "https://openlibrary.org";
 
 function headers(): HeadersInit {
   const contact = process.env.OPEN_LIBRARY_CONTACT;
-  return { "User-Agent": `Commonplace/1.0 (private book clubs${contact ? `; ${contact}` : ""})` };
+  return { "User-Agent": `${BRAND.name}/1.0 (private book clubs${contact ? `; ${contact}` : ""})` };
 }
 
 type Edition = {
