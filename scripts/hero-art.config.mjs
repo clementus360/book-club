@@ -13,15 +13,7 @@ const config = {
   folder: "hero-art",
   // Slides kept elsewhere come first. `focus` is the point of the background to
   // keep when cropping: 0,0 is top left.
-  slides: [
-    { id: "percy-jackson", background: "../Background.png", focus: [0.56, 0.5], character: "../Character.png" },
-    { id: "dungeon-crawler-carl", background: "../dcc/Background.png", focus: [0.5, 0.45], character: "../dcc/Character.png" },
-    { id: "the-maze-runner", background: "../mr/Background.png", focus: [0.46, 0.5], character: "../mr/character.png" },
-    { id: "into-the-spider-verse", background: "../Spiderverse/Background.png", focus: [0.5, 0.3], character: "../Spiderverse/Character.png" },
-    { id: "arcane", background: "../arcane/Background.png", focus: [0.5, 0.5], character: "../arcane/Character.png" },
-    { id: "breaking-bad", background: "../breaking bad/Background.png", focus: [0.5, 0.5], character: "../breaking bad/Character.png" },
-    { id: "chainsaw-man", background: "../chainsawman/Background.png", focus: [0.5, 0.5], character: "../chainsawman/Character.png" },
-  ],
+  slides: [],
 };
 
 export default config;

@@ -7,88 +7,52 @@
   ],
   "slides": [
     {
-      "id": "percy-jackson",
+      "id": "orange-dress",
       "background": [
         760,
-        1360
+        1087
       ],
       "character": [
         640,
         1200
       ],
-      "characterRatio": 0.9485
+      "characterRatio": 0.8957
     },
     {
-      "id": "dungeon-crawler-carl",
+      "id": "red-motorbike",
       "background": [
         760,
-        1284
-      ],
-      "character": [
-        640,
-        753
-      ],
-      "characterRatio": 0.6233
-    },
-    {
-      "id": "the-maze-runner",
-      "background": [
-        760,
-        1360
+        1097
       ],
       "character": [
         640,
         1200
       ],
-      "characterRatio": 1.15
+      "characterRatio": 1.1345
     },
     {
-      "id": "into-the-spider-verse",
+      "id": "roys-motel",
       "background": [
         760,
-        841
+        1108
       ],
       "character": [
         640,
         1200
       ],
-      "characterRatio": 1.5889
+      "characterRatio": 0.5056
     },
     {
-      "id": "arcane",
+      "id": "braids",
       "background": [
         760,
-        952
+        1207
       ],
       "character": [
         640,
         1200
       ],
       "characterRatio": 0.6908
-    },
-    {
-      "id": "breaking-bad",
-      "background": [
-        760,
-        953
-      ],
-      "character": [
-        640,
-        1200
-      ],
-      "characterRatio": 0.7855
-    },
-    {
-      "id": "chainsaw-man",
-      "background": [
-        760,
-        953
-      ],
-      "character": [
-        640,
-        1200
-      ],
-      "characterRatio": 1.1325
     }
   ]
 }

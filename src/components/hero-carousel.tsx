@@ -106,11 +106,11 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
       <div className="hero-controls">
         {/* Keyed, so each title fades in with its slide. */}
         <p key={slides[index]!.id} className="hero-caption">
-          <cite>{slides[index]!.book.title}</cite>
-          {slides[index]!.book.author && <span>{slides[index]!.book.author}</span>}
+          <cite>{slides[index]!.title}</cite>
+          <span>Photo by <a href={slides[index]!.credit.href} target="_blank" rel="noopener noreferrer">{slides[index]!.credit.by}</a> on <a href={slides[index]!.credit.photo} target="_blank" rel="noopener noreferrer">{slides[index]!.credit.site}</a></span>
         </p>
         {many && slides.map((s, i) => (
-          <button key={s.id} type="button" onClick={() => { if (i !== index) setWanted(i); }} aria-label={`Show ${s.book.title}`} aria-current={i === index ? "true" : undefined} className="hero-dot" />
+          <button key={s.id} type="button" onClick={() => { if (i !== index) setWanted(i); }} aria-label={`Show ${s.title}`} aria-current={i === index ? "true" : undefined} className="hero-dot" />
         ))}
         <button type="button" onClick={() => setPlaying(!playing)} className="hero-pause">
           <svg aria-hidden width="10" height="10" viewBox="0 0 10 10" fill="currentColor">{playing ? <path d="M1 0h3v10H1zM6 0h3v10H6z" /> : <path d="M1 0l9 5-9 5z" />}</svg>

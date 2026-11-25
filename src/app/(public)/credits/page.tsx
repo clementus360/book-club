@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { Metadata } from "next";
 import { BRAND } from "@/lib/brand";
+import { HERO_SLIDES } from "@/lib/hero";
 
 export const metadata: Metadata = { title: "Credits" };
 
@@ -38,6 +39,16 @@ export default function Credits() {
           </div>
         ))}
       </dl>
+      <h2>Homepage photographs</h2>
+      <p>Used under the <a className="link" href="https://unsplash.com/license" target="_blank" rel="noopener noreferrer">Unsplash</a> and <a className="link" href="https://www.pexels.com/license/" target="_blank" rel="noopener noreferrer">Pexels</a> licences. Backgrounds and figures were cut out and combined for the homepage.</p>
+      <ul>
+        {HERO_SLIDES.map((s) => (
+          <li key={s.id} className="border-t border-rule py-3">
+            <a className="link" href={s.credit.photo} target="_blank" rel="noopener noreferrer">{s.title}</a>
+            <span className="text-soft">{" by "}<a className="link" href={s.credit.href} target="_blank" rel="noopener noreferrer">{s.credit.by}</a>{` on ${s.credit.site}`}</span>
+          </li>
+        ))}
+      </ul>
       <h2>Members</h2>
       <p>Everything else, from manual entries to discussion notes, is written by the members of each club.</p>
     </article>

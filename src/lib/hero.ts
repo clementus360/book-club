@@ -6,12 +6,15 @@ import generated from "./hero.generated.json";
  * (0 is the very top, above the paint).
  */
 export type Placement = { width: number; x: number; y: number };
+/** "Photo by {by} on {site}", each linked, as the photo sites ask. */
+export type Credit = { by: string; href: string; site: "Unsplash" | "Pexels"; photo: string };
 export type HeroSlide = {
   id: string;
   /** Said to people who cannot see the picture. */
   alt: string;
-  /** Named quietly under the artwork. */
-  book: { title: string; author: string | null };
+  /** Named quietly under the artwork, with who took the photograph. */
+  title: string;
+  credit: Credit;
   characterRatio: number;
   widths: { background: number[]; character: number[] };
   character: Placement;
@@ -31,39 +34,33 @@ export const CHANGE = 2.2;
  * Everything here is optional. Slides come from scripts/hero-art.mjs (put a
  * folder in hero-art/ and run `npm run hero`); this is for adjusting one.
  */
-const ADJUST: Record<string, { alt?: string; book?: Partial<HeroSlide["book"]>; character?: Partial<Placement>; grow?: Partial<HeroSlide["grow"]> }> = {
-  "percy-jackson": {
-    book: { title: "Percy Jackson & the Olympians", author: "Rick Riordan" },
-    alt: "Percy Jackson and two friends step out of a stormy sea, the one in front holding a golden sword.",
-    character: { width: 0.83, x: 0.535, y: 0.135 },
+const ADJUST: Record<string, { title?: string; alt?: string; character?: Partial<Placement>; grow?: Partial<HeroSlide["grow"]> }> = {
+  "orange-dress": {
+    title: "Woman in orange dress holding oranges",
+    alt: "A woman in a billowing orange dress holds an orange up to her ear, in front of a market stall.",
   },
-  "dungeon-crawler-carl": {
-    book: { author: "Matt Dinniman" },
-    alt: "Carl, in a leather jacket and heart-patterned shorts, charges out of a dungeon with Princess Donut, his cat.",
+  "red-motorbike": {
+    title: "Young man on a red motorbike in a bustling market",
+    alt: "A young man in a white T-shirt leans on the handlebars of a red motorbike in a busy street market.",
+    character: { width: 0.78, x: 0.53 },
   },
-  "the-maze-runner": {
-    book: { author: "James Dashner" },
-    alt: "A group of young runners sprint away from the towering, ivy-covered walls of the maze.",
-    character: { width: 0.79, x: 0.51, y: 0.262 },
+  "roys-motel": {
+    title: "Roy’s Motel and Cafe desert sign",
+    alt: "The star-shaped sign of Roy’s Motel and Cafe stands over a desert petrol station on Route 66.",
   },
-  "into-the-spider-verse": {
-    book: { title: "Spider-Man: Into the Spider-Verse", author: "An animated film" },
-    alt: "Miles Morales, Gwen Stacy and Peter Parker leap across a bright sky in their Spider-Man suits.",
-    character: { width: 0.8, x: 0.52, y: 0.38 },
+  braids: {
+    title: "Young girl with braided hair",
+    alt: "A girl with braided hair rests her chin on her knee and looks straight ahead, in black and white.",
   },
-  arcane: {
-    book: { title: "Arcane", author: "A series by Christian Linke and Alex Yee" },
-    alt: "Jinx, with long blue braids, looks out from a neon-lit city.",
-  },
-  "breaking-bad": {
-    book: { title: "Breaking Bad", author: "A series by Vince Gilligan" },
-    alt: "Walter White sits in a yellow protective suit, staring straight ahead.",
-  },
-  "chainsaw-man": {
-    book: { title: "Chainsaw Man", author: "An anime by MAPPA" },
-    alt: "Denji, with a chainsaw for a head and chainsaws for arms, leaps forward.",
-    character: { width: 0.76, x: 0.51 },
-  },
+};
+
+const UNSPLASH = (by: string, user: string, photo: string): Credit => ({ by, href: `https://unsplash.com/@${user}`, site: "Unsplash", photo: `https://unsplash.com/photos/${photo}` });
+/** Every slide needs one, taken from the photo's own page. */
+export const CREDITS: Record<string, Credit> = {
+  "orange-dress": UNSPLASH("Christian Agbede", "chriscreations__", "AvNRrrZjNaI"),
+  "red-motorbike": { by: "Dang Vu Hai", href: "https://www.pexels.com/@dang-vu-hai-683750211/", site: "Pexels", photo: "https://www.pexels.com/photo/34791085/" },
+  "roys-motel": UNSPLASH("Thomas Drechsler", "thomasdrechsler", "AOa8k6-ixkI"),
+  braids: UNSPLASH("Adewale Shobaloju", "ogidan", "GLnliNAykYA"),
 };
 
 export const STAGE = { ratio: generated.stageRatio, rise: generated.rise as [number, number] };
@@ -85,11 +82,13 @@ export const HERO_SLIDES: HeroSlide[] = generated.slides.map(({ id, characterRat
   const own = ADJUST[id] ?? {};
   return {
     id, characterRatio, widths: { background, character },
-    book: { title: title(id), author: null, ...own.book },
-    alt: own.alt ?? `Artwork inspired by ${title(id)}.`,
+    title: own.title ?? title(id),
+    credit: CREDITS[id]!,
+    alt: own.alt ?? `A photograph: ${title(id)}.`,
     character: { ...place(characterRatio), ...own.character },
     grow: { ...GROW, ...own.grow },
   };
 });
 
-export const UNUSED_ADJUSTMENTS = Object.keys(ADJUST).filter((id) => !generated.slides.some((s) => s.id === id));
+export const UNUSED_ADJUSTMENTS = [...Object.keys(ADJUST), ...Object.keys(CREDITS)].filter((id) => !generated.slides.some((s) => s.id === id));
+export const UNCREDITED = generated.slides.map((s) => s.id).filter((id) => !CREDITS[id]);

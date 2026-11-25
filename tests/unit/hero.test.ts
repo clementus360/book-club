@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import generated from "@/lib/hero.generated.json";
-import { CHANGE, HERO_SLIDES, place, SHOWN, STAGE, UNUSED_ADJUSTMENTS } from "@/lib/hero";
+import { CHANGE, HERO_SLIDES, place, SHOWN, STAGE, UNCREDITED, UNUSED_ADJUSTMENTS } from "@/lib/hero";
 
 const alpha = async (name: string) => {
   const { data, info } = await sharp(`public/hero/${name}`).extractChannel(3).raw().toBuffer({ resolveWithObject: true });
@@ -58,8 +58,9 @@ describe("hero slides", () => {
   });
   it("has a unique, described slide for each id, and no leftover adjustments", () => {
     expect(new Set(HERO_SLIDES.map((s) => s.id)).size).toBe(HERO_SLIDES.length);
-    expect(HERO_SLIDES.every((s) => s.alt.length > 15 && s.book.title.length > 2)).toBe(true);
+    expect(HERO_SLIDES.every((s) => s.alt.length > 15 && s.title.length > 2)).toBe(true);
     expect(UNUSED_ADJUSTMENTS).toEqual([]);
+    expect(UNCREDITED).toEqual([]);
     expect(SHOWN).toBeGreaterThan(CHANGE * 2);
   });
 });

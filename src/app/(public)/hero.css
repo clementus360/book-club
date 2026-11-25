@@ -95,9 +95,11 @@
 
 /* With many slides, a narrow phone puts the caption on its own line above the dots. */
 .hero-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0 0.25rem; padding-top: 0.25rem; min-height: 2.75rem; }
-/* Quiet on purpose: it names the book without competing with the headline. */
+/* Quiet on purpose: it names the photo and who took it without competing with the headline. */
 .hero-caption { flex: 1 1 0; min-width: 0; font-size: 0.875rem; line-height: 1.35; color: var(--color-soft); animation: hero-name 0.9s calc(var(--hero-change, 2.2s) * 0.4) ease-out both; }
 .hero-caption cite { display: block; font-family: var(--font-serif); font-style: italic; color: var(--color-ink); }
+.hero-caption a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+.hero-caption a:hover { color: var(--color-ink); }
 @keyframes hero-name { from { opacity: 0; } to { opacity: 1; } }
 /* Already there when the page opens. */
 .hero-art:not(:has([data-state="entering"], [data-state="leaving"])) .hero-caption { animation-duration: 0s; animation-delay: 0s; }

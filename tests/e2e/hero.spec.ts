@@ -43,30 +43,30 @@ test("slides change by hand and by themselves, named, loaded, and only while all
   await page.waitForLoadState("networkidle");
   const caption = page.locator(".hero-caption cite");
   const settled = () => expect(page.locator("[data-state=entering], [data-state=leaving]")).toHaveCount(0);
-  await expect(caption).toHaveText(HERO_SLIDES[0]!.book.title);
+  await expect(caption).toHaveText(HERO_SLIDES[0]!.title);
 
   // It moves on by itself.
-  await expect(caption).toHaveText(HERO_SLIDES[1]!.book.title, { timeout: 20_000 });
+  await expect(caption).toHaveText(HERO_SLIDES[1]!.title, { timeout: 20_000 });
   await settled();
   // Paused, it stays put; a dot still works.
   await page.getByRole("button", { name: "Pause the artwork" }).click();
   await page.waitForTimeout(13_000);
-  await expect(caption).toHaveText(HERO_SLIDES[1]!.book.title);
+  await expect(caption).toHaveText(HERO_SLIDES[1]!.title);
   for (const slide of [...HERO_SLIDES].reverse()) {
-    await page.getByRole("button", { name: `Show ${slide.book.title}` }).click();
-    await expect(caption).toHaveText(slide.book.title);
-    await expect(page.getByRole("button", { name: `Show ${slide.book.title}` })).toHaveAttribute("aria-current", "true");
-    if (slide.book.author) await expect(page.locator(".hero-caption")).toContainText(slide.book.author);
+    await page.getByRole("button", { name: `Show ${slide.title}` }).click();
+    await expect(caption).toHaveText(slide.title);
+    await expect(page.getByRole("button", { name: `Show ${slide.title}` })).toHaveAttribute("aria-current", "true");
+    await expect(page.locator(".hero-caption")).toContainText(`Photo by ${slide.credit.by} on ${slide.credit.site}`);
     // Never painted before its pictures have arrived.
     expect(await page.locator("[data-state=entering] img, [data-state=on] img").evaluateAll((imgs) => imgs.every((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0))).toBe(true);
     await settled();
     await expect(page.getByRole("img", { name: slide.alt })).toBeVisible();
   }
   // Two quick clicks end on the second one asked for.
-  await page.getByRole("button", { name: `Show ${HERO_SLIDES[1]!.book.title}` }).click();
-  await page.getByRole("button", { name: `Show ${HERO_SLIDES.at(-1)!.book.title}` }).click();
+  await page.getByRole("button", { name: `Show ${HERO_SLIDES[1]!.title}` }).click();
+  await page.getByRole("button", { name: `Show ${HERO_SLIDES.at(-1)!.title}` }).click();
   await settled();
-  await expect(caption).toHaveText(HERO_SLIDES.at(-1)!.book.title, { timeout: 8000 });
+  await expect(caption).toHaveText(HERO_SLIDES.at(-1)!.title, { timeout: 8000 });
   // Nothing spills past the page on a phone.
   await page.setViewportSize({ width: 360, height: 740 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
